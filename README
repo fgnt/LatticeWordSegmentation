@@ -1,0 +1,45 @@
+###########################
+# LatticeWordSegmentation #
+###########################
+
+Software to apply unsupervised word segmentation on lattices or text sequences
+using a nested hierarchical Pitman Yor language model
+
+##############
+# References #
+##############
+
+Iterative Bayesian Word Segmentation for Unspuervised Vocabulary Discovery from Phoneme Lattices
+Jahn Heymann, Oliver Walter, Reinhold Haeb-Umbach, Bhiksha Raj
+In 39th International Conference on Acoustics, Speech and Signal Processing (ICASSP 2014)
+
+Unsupervised Word Segmentation from Noisy Input
+Jahn Heymann, Oliver Walter, Reinhold Haeb-Umbach, Bhiksha Raj
+In Automatic Speech Recognition and Understanding Workshop (ASRU 2013)
+
+Graham Neubig, Masato Mimura, Shinsuke Mori, Tatsuya Kawahara
+"Learning a Language Model from Continuous Speech"
+In proceedings for InterSpeech 2010
+
+
+######################
+# Manual Instalation #
+######################
+
+Import project into kdevelop (or other IDE)
+Set cmake build path to $GITROOT/build/ (next to src/ and test/ directories)
+Install openFST from http://www.openfst.org/twiki/bin/view/FST/FstDownload
+Required boost packages: boost_system, boost_filesystem
+
+
+#########################
+# Automatic instalation #
+#########################
+
+run install.sh, this will also install boost and openfst in the tools directory
+
+############
+# Examples #
+############
+
+For demonstations see the scripts in the test/ folder

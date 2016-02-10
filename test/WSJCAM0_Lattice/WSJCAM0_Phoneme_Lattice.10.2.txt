@@ -1,0 +1,2 @@
+WSJCAM0_Lattice/openfst/c0bc021g.lat_10.000000
+WSJCAM0_Lattice/openfst/c2jc021e.lat_10.000000

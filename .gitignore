@@ -1,0 +1,17 @@
+tools/openfst-1.5.0.tar.gz
+tools/openfst-1.5.0/
+tools/boost_1_60_0.tar.bz2
+tools/boost_1_60_0/
+tools/include/fst/
+tools/include/boost/
+tools/bin/
+tools/lib/
+build/
+src/*.kdev4
+test/Results/
+test/WSJCAM0_WSJ0+1_Cross_Lattice/openfst/*.lat_16.000000
+test/WSJCAM0_WSJ0+1_Cross_Lattice/openfst/symbols.txt
+test/WSJCAM0_Lattice/openfst/*.lat_10.000000
+test/WSJCAM0_Lattice/openfst/symbols.txt
+test/WSJCAM0_WSJ0+1_Cross_Lattice/htk/*.lat
+test/WSJCAM0_WSJ0+1_Cross_Lattice/lattice_export/
