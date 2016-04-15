@@ -60,19 +60,114 @@
 #ifndef _DEBUGLIB_HPP_
 #define _DEBUGLIB_HPP_
 
+#include <fst/vector-fst.h>
+#include <sys/stat.h>
 #include "NHPYLM/NHPYLM.hpp"
+#include "definitions.hpp"
+
 
 /* library including some debug functions */
 class DebugLib {
 public:
-  static void PrintTransitions(const HPYLM::ContextToContextTransitions &Transitions, unsigned int CurrentContextId, std::vector< bool > &VisitedContextIds, const NHPYLM &LanguageModel, int SentEndWordId); // print transitions output recursively
-  static void PrintSentence(const const_witerator &SentenceBegin, int NumWords, const std::vector<std::string> &Id2CharacterSequence);                                                                        // print sentence with character sequences
-  static void PrintEditDistanceStatistics(const std::vector< int > &SegmentationInsDelSubCorrNFoundNRef, const std::string &Description, const std::string &Name);
-  static void PrintLexiconStatistics(const std::vector<int> &LexiconCorrNFoundNRef);
-  static void PrintSentencesPerplexity(const std::vector<std::vector<int> > &Sentences, const NHPYLM &LanguageModel);
-  static void PrintLanguageModelStats(const NHPYLM &LanguageModel);
-  static void PrintVectorOfInts(const std::vector<int> &VectorOfInts, int Width, const std::string &Description, const std::string &Postfix);
-  static void PrintVectorOfDoubles(const std::vector<double> &VectorOfDoubles, int Width, const std::string &Description, const std::string &Postfix);
+  // print transitions output recursively
+  static void PrintTransitions(
+    const HPYLM::ContextToContextTransitions &Transitions,
+    unsigned int CurrentContextId,
+    std::vector< bool > &VisitedContextIds,
+    const NHPYLM &LanguageModel,
+    int SentEndWordId
+  );
+  
+  // print sentence with character sequences
+  static void PrintSentence(
+    const const_witerator &SentenceBegin,
+    int NumWords,
+    const std::vector<std::string> &Id2CharacterSequence
+  );
+  
+  static void PrintEditDistanceStatistics(
+    const std::vector< int > &SegmentationInsDelSubCorrNFoundNRef,
+    const std::string &Description,
+    const std::string &Name
+  );
+  
+  static void PrintLexiconStatistics(
+    const std::vector<int> &LexiconCorrNFoundNRef
+  );
+  
+  static void PrintSentencesPerplexity(
+    const std::vector<std::vector<int> > &Sentences,
+    const NHPYLM &LanguageModel
+  );
+  
+  static void PrintLanguageModelStats(
+    const NHPYLM &LanguageModel
+  );
+  
+  static void PrintVectorOfInts(
+    const std::vector<int> &VectorOfInts,
+    int Width,
+    const std::string &Description,
+    const std::string &Postfix
+  );
+  
+  static void PrintVectorOfDoubles(
+    const std::vector<double> &VectorOfDoubles,
+    int Width,
+    const std::string &Description,
+    const std::string &Postfix
+  );
+  
+  // write openfst lattices
+  static void WriteOpenFSTLattice(
+    const fst::VectorFst<fst::LogArc> &fst,
+    const string &FileName);
+  
+  // write symbols to symbolfile
+  static void WriteSymbols(
+    const string &fileName,
+    const std::vector<std::string> &words,
+    SymbolWriteModes SymbolWriteMode
+  );
+  
+  // recursive directory creating
+  static void CreateDirectoryRecursively(
+    const string &DirectoryName,
+    size_t PathSeperatorPosition = string::npos
+  );
+  
+  // print given fst to file or generate pdf graphic for fst
+  static void PrintFST(
+    const string &pFileName,
+    const std::vector<std::string> &words,
+    const fst::VectorFst<fst::LogArc> &fst,
+    bool printPDF,
+    SymbolWriteModes SymbolWriteMode
+  );
+  
+  // print given sentence to text file
+  static void PrintSentencesToFile(
+    const std::string &filename,
+    const std::vector<std::vector<int> > &Sentences,
+    const std::vector<std::string> &Id2CharacterSequence
+  );
+  
+  // print given sentence with timings to text file
+  static void PrintTimedSentencesToFile(
+    const std::string &FileName,
+    const std::vector<std::vector<ArcInfo> > &TimedSentences,
+    const std::vector<std::string> &Id2CharacterSequence,
+    const std::vector<std::string> &InputFileNames
+  );
+  
+  static void GenerateSentencesOfWordsFromCharLM(
+    const NHPYLM& LanguageModel
+  );
+  
+  static void GenerateSentencesOfWordsFromWordLM(
+    const NHPYLM& LanguageModel,
+    int SentEndWordId
+  );
 };
 
 #endif

@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 /**
-   File: StringToIntMapper.hpp
+   File: definitions.hpp
 
    Status:         Version 1.0
    Language: C++
@@ -48,7 +48,7 @@
 
    E-Mail: walter@nt.uni-paderborn.de
 
-   Description: mapping from string to integer (character id)
+   Description: some definitions used in the segmenter and fst
 
    Limitations: -
 
@@ -57,24 +57,56 @@
    2014         Walter       Initial
 */
 // ----------------------------------------------------------------------------
-#ifndef _STRINGTOINTMAPPER_HPP_
-#define _STRINGTOINTMAPPER_HPP_
+#ifndef _DEFINES_HPP_
+#define _DEFINES_HPP_
 
-#include "definitions.hpp"
+#include <unordered_map>
+#include <fst/matcher.h>
+#include <fst/compose-filter.h>
+#include <fst/lookahead-filter.h>
+#include "../NHPYLM/definitions.hpp"
 
-/* map from string to integer */
-class StringToIntMapper {
-  StringToIntMap StringToInt;           // map string -> int
-  std::vector<std::string> IntToString; // map int -> string
+#define EPS_SYMBOL         "<eps>"
+#define EPS_SYMBOLID       0
+#define PHI_SYMBOL         "<phi>"
+#define PHI_SYMBOLID       1
+#define UNKBEGIN_SYMBOL    "<unk>"
+#define UNKBEGIN_SYMBOLID  2
+#define UNKEND_SYMBOL      "</unk>"
+#define UNKEND_SYMBOLID    3
+#define SENTSTART_SYMBOL   "<s>"
+#define SENTSTART_SYMBOLID 4
+#define SENTEND_SYMBOL     "</s>"
+#define SENTEND_SYMBOLID   5
+#define CHARACTERSBEGIN    6
 
-public:
-  int Insert(const std::string &str);                           // inserts string to map and returns int for string
-  int GetInt(const std::string &str) const;                     // get int for string
-  const std::string &GetString(int id) const;                   // get string for int
-  const std::vector<std::string> &GetIntToStringVector() const; // get the vector containing int to string mapping
-  long GetSize() const {
-    return IntToString.size();
-  }
+typedef int CharId; // alias for character id
+typedef int WordId; // alias for word id
+
+typedef fst::VectorFst<fst::StdArc> StdVectorFst;
+typedef fst::VectorFst<fst::LogArc> LogVectorFst;
+typedef fst::StateIterator<LogVectorFst>  LogStateIterator;
+
+typedef std::unordered_map<std::string, int> StringToIntMap;
+
+// phi matcher for composition with lexicon and language model transducer
+typedef fst::PhiMatcher<fst::SortedMatcher<fst::Fst<fst::LogArc> > > PM;
+typedef fst::ArcMapFst<fst::LogArc, fst::StdArc,
+                       fst::LogToStdMapper> LogToStdMapFst;
+
+typedef fst::ComposeFst<fst::LogArc> LogComposeFst;
+
+// struct to hold arc information
+struct ArcInfo {
+  int label;
+  float start;
+  float end;
+  ArcInfo(int label_, float start_, float end_):
+    label(label_), start(start_), end(end_) {};
 };
+
+enum LatticeFileTypes {CMU_FST, HTK_FST, OPEN_FST, TEXT}; // file types for input lattices
+enum InputTypes {INPUT_FST, INPUT_TEXT};                  // input modes: fst or text
+enum SymbolWriteModes {NONE, NAMES, NAMESANDIDS};         // modes for symbol output in fst printing
 
 #endif

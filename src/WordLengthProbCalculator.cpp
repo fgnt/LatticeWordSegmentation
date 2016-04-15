@@ -42,9 +42,11 @@
 */
 // ----------------------------------------------------------------------------
 #include "WordLengthProbCalculator.hpp"
+#include "NHPYLM/NHPYLM.hpp"
 #include <cmath>
 #include <iostream>
 #include <limits>
+#include <iomanip>
 
 double WordLengthProbCalculator::factorial(double n) const
 {
@@ -107,4 +109,62 @@ const std::vector<double> &WordLengthProbCalculator::GetScaledWordLengthProbabil
   }
 
   return ScaledWordLengthProbabilityVector;
+}
+
+
+void WordLengthProbCalculator::UpdateWHPYLMBaseProbabilitiesScale(
+  NHPYLM *LanguageModel,
+  int WordLengthModulation
+)
+{
+  std::vector<int> WordLengths(LanguageModel->GetWordLengthVector());
+
+  int NumWords = 0;
+  double MeanWordLength = 0;
+  std::vector<double> ObservedWordLengthProbabilities;
+  for (unsigned int WordId = 0; WordId < WordLengths.size(); ++WordId) {
+    if (WordLengths[WordId] > 0) {
+      WordLengths[WordId]++;
+      int TablesPerWord = LanguageModel->GetWHPYLBaseTablesPerWord(WordId);
+      NumWords += TablesPerWord;
+      MeanWordLength += TablesPerWord * WordLengths[WordId];
+      ObservedWordLengthProbabilities.resize(
+        std::max(
+          static_cast<size_t>(WordLengths[WordId] + 1),
+          ObservedWordLengthProbabilities.size()
+        )
+      );
+      ObservedWordLengthProbabilities.at(WordLengths[WordId]) += TablesPerWord;
+    }
+  }
+
+  int WordLength = 0;
+  for (double & WordLengthProbability : ObservedWordLengthProbabilities) {
+    WordLengthProbability /= NumWords;
+    std::cout << std::setprecision(4) << std::fixed << "Word length: "
+              << WordLength++ << ", word length probability: "
+              << WordLengthProbability << std::endl;
+  }
+  MeanWordLength /= NumWords;
+  std::cout << "Mean word length: " << MeanWordLength << ", number of word: "
+            << NumWords << std::endl << std::endl;
+
+  if (WordLengthModulation > -1) {
+    std::vector<double> GeneratedWordLengthProbabilities;
+    LanguageModel->Generate("CHPYLM", 100000, -1,
+                            &GeneratedWordLengthProbabilities);
+
+    WordLengthProbCalculator WLPVectorCalculator;
+    WLPVectorCalculator.SetGeneratedLengthDistribution(
+      GeneratedWordLengthProbabilities);
+    if (WordLengthModulation == 0) {
+      WLPVectorCalculator.SetObservedLengthDistribution(
+        ObservedWordLengthProbabilities);
+    } else {
+//       std::cout << "Using: " << Params.WordLengthModulation << std::endl;
+      WLPVectorCalculator.SetDesiredLengthMean(WordLengthModulation);
+    }
+    LanguageModel->SetWHPYLMBaseProbabilitiesScale(
+      WLPVectorCalculator.GetScaledWordLengthProbabilityVector());
+  }
 }

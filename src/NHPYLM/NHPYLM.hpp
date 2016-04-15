@@ -112,7 +112,7 @@ public:
   int GetCHPYLMOrder() const;                                                     // get the character hierarchical language model order
   int GetWHPYLMOrder() const;                                                     // get the word hierarchical language model order
   std::vector<int> GetTotalCountPerLevelFor(const std::string &LM, const std::string &CountName) const;  // get total count per level for given LM ("CHPYLM"|"WHPYLM") and name ("Context"|"Table"|"Word")
-  std::vector<std::vector<int> > Generate(std::string Mode, int NumWorsdOrCharacters, int SentEndWordId, std::vector<double> *GeneratedWordLengthDistribution_);                      // generate character or word sequences from the language models
+  std::vector<std::vector<int> > Generate(std::string Mode, int NumWorsdOrCharacters, int SentEndWordId, std::vector<double> *GeneratedWordLengthDistribution_) const;                      // generate character or word sequences from the language models
   void SetWHPYLMBaseProbabilitiesScale(const std::vector<double> &WHPYLMBaseProbabilitiesScale_);
   const std::vector<double> &GetWHPYLMBaseProbabilitiesScale() const;
   int GetWHPYLBaseTablesPerWord(int WordId) const;

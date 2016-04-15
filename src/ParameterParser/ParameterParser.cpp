@@ -51,6 +51,9 @@ ParameterParser::ParameterParser(int argc, const char **argv)
   std::cout << "LatticeWordSegmentation: build date: " << __DATE__ << " - time: " << __TIME__ << std::endl;
   std::cout << "-----------------------------------------------------------------------------------------------------------" << std::endl;
 
+  if(argc < 2) {
+    DieOnHelp();
+  }
   // read the arguments
   int argPos = 1;
   for (; argPos < argc && argv[argPos][0] == '-'; argPos++) {
@@ -89,10 +92,12 @@ ParameterParser::ParameterParser(int argc, const char **argv)
       } else {
         std::ostringstream err;
         err << "Bad input type '" << argv[argPos] << "'";
-        DieOnHelp(err.str().c_str());
+        DieOnHelp(err.str());
       }
     } else if (!strcmp(argv[argPos], "-SymbolFile")) {
       Parameters.SymbolFile = argv[++argPos];
+    } else if (!strcmp(argv[argPos], "-InputArcInfosFile")) {
+      Parameters.InputArcInfosFile = argv[++argPos];
     } else if (!strcmp(argv[argPos], "-prefix")) {
       Parameters.Prefix = argv[++argPos];
     } else if (!strcmp(argv[argPos], "-separator")) {
@@ -134,7 +139,7 @@ ParameterParser::ParameterParser(int argc, const char **argv)
       } else {
         std::ostringstream err;
         err << "Bad lattice file type '" << argv[argPos] << "'";
-        DieOnHelp(err.str().c_str());
+        DieOnHelp(err.str());
       }
     } else if (!strcmp(argv[argPos], "-EvalInterval")) {
       Parameters.EvalInterval =  atoi(argv[++argPos]);
@@ -198,11 +203,23 @@ ParameterParser::ParameterParser(int argc, const char **argv)
       Parameters.PruningStart = atof(argv[++argPos]);
       Parameters.PruningStep = atof(argv[++argPos]);
       Parameters.PruningEnd = atof(argv[++argPos]);
+    } else if (!strcmp(argv[argPos], "-ReadNodeTimes")) {
+      Parameters.ReadNodeTimes = true;
     } else {
       std::ostringstream err;
       err << "Illegal option: " << argv[argPos];
-      DieOnHelp(err.str().c_str());
+      DieOnHelp(err.str());
     }
+  }
+
+  // Terminate if a PER, LPER or WER shall be calculated
+  // without providing a reference transcription
+  if ((Parameters.CalculateLPER || Parameters.CalculatePER ||
+       Parameters.CalculateWER) && !Parameters.UseReferenceTranscription) {
+    std::ostringstream err;
+    err << "Illegal option: Without a reference transcription"
+        << " LPER, PER or WER cannot be calculated!";
+    DieOnHelp(err.str());
   }
 
   // load the input files, either from the list or from the parameters
@@ -213,7 +230,7 @@ ParameterParser::ParameterParser(int argc, const char **argv)
   }
 }
 
-void ParameterParser::DieOnHelp(const char *err) const
+void ParameterParser::DieOnHelp(const std::string& err) const
 {
   std::cout << "---LatticeWordSegmentation---" << std::endl
             << " A tool for learning a language model and a word dictionary" << std::endl
@@ -232,6 +249,8 @@ void ParameterParser::DieOnHelp(const char *err) const
             << "                         Text files consist of one sentence per line, each symbol seperated by a whitespace." << std::endl
             << "  -InputType:            The type of the input (-InputType [text|fst] (text))" << std::endl
             << "  -SymbolFile:           The symbolfile if reading from openfst lattices (-SymbolFile SymbolfileName (NULL))" << std::endl
+            << "  -InputArcInfosFile:    arc infos file if reading from openfst lattices where input id points to" << std::endl
+            << "                         label, start, end infos (Parameter: -InputArcInfosFile InputArcInfosFile ())" << std::endl
             << "  -Debug:                Set debug level (-Debug N (0))" << std::endl
             << "  -LatticeFileType:      Format of lattice files (-LatticeFileType [cmu|htk|openfst] (text))" << std::endl
             << "  -ExportLattices:       Export the input lattices to openfst format (-ExportLattices ExportLatticesDirectoryName)" << std::endl
@@ -266,9 +285,10 @@ void ParameterParser::DieOnHelp(const char *err) const
             << "                         0: off, >0 number of iteration (Parameter: -UseVitery NumIter)" << std::endl
             << "  -DeactivateCharacterModel: Set iteration to deactivate character model." << std::endl
             << "                             0: off, >0 number of iteration (Parameter: -DeactivateCharacterModel NumIter)" << std::endl
-            << "  -HTKLMScale:           Language model scaling factor when reading HTK lattices (Parameter: -HTKLMScale K (0))" << std::endl;
+            << "  -HTKLMScale:           Language model scaling factor when reading HTK lattices (Parameter: -HTKLMScale K (0))" << std::endl
+            << "  -ReadNodeTimes;        Read node timing informations from HTK lattice" << std::endl;
 
-  if (err) {
+  if(!err.empty()){
     std::cout << std::endl << " Error: " << err << std::endl;
   }
   exit(1);
@@ -280,7 +300,7 @@ void ParameterParser::ReadFilesFromFileList(const std::string &InputFileList)
   if (!files) {
     std::ostringstream err;
     err << "Couldn't find the file list: '" << InputFileList << "'" << std::endl;
-    DieOnHelp(err.str().c_str());
+    DieOnHelp(err.str());
   }
   std::string buff;
   while (std::getline(files, buff)) {
@@ -289,7 +309,7 @@ void ParameterParser::ReadFilesFromFileList(const std::string &InputFileList)
     if (!checkFile) {
       std::ostringstream err;
       err << "Couldn't find input file: '" << buff << "'" << std::endl;
-      DieOnHelp(err.str().c_str());
+      DieOnHelp(err.str());
     }
     checkFile.close();
   }
@@ -304,19 +324,19 @@ void ParameterParser::ReadFilesFromParameters(int argc, const char **argv)
     if (!checkFile) {
       std::ostringstream err;
       err << "Couldn't find input file: '" << argv[argPos] << "'" << std::endl;
-      DieOnHelp(err.str().c_str());
+      DieOnHelp(err.str());
     }
     checkFile.close();
   }
 }
 
-const ParameterParser::ParameterStruct &ParameterParser::GetParameters() const
+const ParameterStruct &ParameterParser::GetParameters() const
 {
   return Parameters;
 }
 
 
-ParameterParser::ParameterStruct::ParameterStruct() :
+ParameterStruct::ParameterStruct() :
   KnownN(1),
   UnkN(1),
   NoThreads(1),
@@ -324,6 +344,7 @@ ParameterParser::ParameterStruct::ParameterStruct() :
   InputFilesList(),
   InputType(INPUT_TEXT),
   SymbolFile(),
+  InputArcInfosFile(),
   AmScale(1),
   Debug(0),
   LatticeFileType(TEXT),
@@ -354,6 +375,7 @@ ParameterParser::ParameterStruct::ParameterStruct() :
   WordLengthModulation(-1),
   UseViterby(0),
   DeactivateCharacterModel(0),
-  HTKLMScale(0)
+  HTKLMScale(0),
+  ReadNodeTimes(false)
 {
 }

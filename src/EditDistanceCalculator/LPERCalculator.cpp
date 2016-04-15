@@ -41,14 +41,18 @@
    Author: Oliver Walter
 */
 // ----------------------------------------------------------------------------
-#include "LPERCalculator.hpp"
-#include "definitions.hpp"
 #include <fst/arc-map.h>
+#include <fst/rmepsilon.h>
+#include <CustomArcMappers.hpp>
+#include "LPERCalculator.hpp"
 
-LPERCalculator::LPERCalculator(const vector< fst::VectorFst< fst::LogArc > > &InputFsts_, const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts, const vector< string > &Id2CharacterSequenceVector, unsigned int NumThreads_, const std::vector<std::string> &FileNames_, const std::string &Prefix_, bool OutputEditOperations_) :
+LPERCalculator::LPERCalculator(const vector< fst::VectorFst< fst::LogArc > > &InputFsts_, const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts, const vector< string > &Id2CharacterSequenceVector, unsigned int NumThreads_, const std::vector<std::string> &FileNames_, const std::string &Prefix_, bool OutputEditOperations_, const std::vector<ArcInfo> &InputArcInfos_) :
   EditDistanceCalculator(NumThreads_, FileNames_, Prefix_, OutputEditOperations_)
 {
-  RemoveWeightAndConvertToStdArc(InputFsts_, &InputFsts);
+//   FileReader::PrintFST("lattice_debug/BeforeRemove.fst", Id2CharacterSequenceVector, InputFsts_[0], false, NONE);
+  RemoveWeightAndConvertToStdArc(InputFsts_, &InputFsts, InputArcInfos_);
+//   fst::ArcMapFst<fst::StdArc, fst::LogArc, fst::StdToLogMapper > StdToLogFst(InputFsts[0], fst::StdToLogMapper());
+//   FileReader::PrintFST("lattice_debug/AfterRemove.fst", Id2CharacterSequenceVector, fst::VectorFst<fst::LogArc>(StdToLogFst), false, NONE);
   ParseFsts(ReferenceFsts, &ReferenceSentences);
   InputAndReferenceIds.resize(Id2CharacterSequenceVector.size() - CHARACTERSBEGIN);
   std::iota(InputAndReferenceIds.begin(), InputAndReferenceIds.end(), CHARACTERSBEGIN);
@@ -83,10 +87,12 @@ void LPERCalculator::ParseFsts(const vector< fst::VectorFst< fst::LogArc > > &Fs
 }
 
 
-void LPERCalculator::RemoveWeightAndConvertToStdArc(const vector< fst::VectorFst< fst::LogArc > > &LogFsts, vector< fst::VectorFst< fst::StdArc > > *StdFsts)
+void LPERCalculator::RemoveWeightAndConvertToStdArc(const vector< fst::VectorFst< fst::LogArc > > &LogFsts, vector< fst::VectorFst< fst::StdArc > > *StdFsts, const std::vector<ArcInfo> &InputArcInfos)
 {
   StdFsts->resize(LogFsts.size());
   for (unsigned int IdxFst = 0; IdxFst < LogFsts.size(); ++IdxFst) {
-    fst::ArcMap(LogFsts.at(IdxFst), &StdFsts->at(IdxFst), fst::RmWeightMapper<fst::LogArc, fst::StdArc>());
+    fst::ArcMapFst<fst::LogArc, fst::LogArc, fst::RestoreIlabelMapper> LogArcMapFst(LogFsts.at(IdxFst), fst::RestoreIlabelMapper(InputArcInfos));
+    fst::RmEpsilonFst<fst::LogArc> LogArcRmEpsilonFst(LogArcMapFst);
+    fst::ArcMap(LogArcRmEpsilonFst, &StdFsts->at(IdxFst), fst::RmWeightMapper<fst::LogArc, fst::StdArc>());
   }
 }

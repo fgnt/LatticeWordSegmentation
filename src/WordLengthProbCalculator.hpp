@@ -61,23 +61,58 @@
 #define _WORDLENGTHPROBCACLULATOR_HPP_
 
 #include <vector>
+#include "NHPYLM/NHPYLM.hpp"
 
+/* class to calculate some word length probability distribution */
 class WordLengthProbCalculator {
-  std::vector<double> GeneratedLengthDistribution;
-  std::vector<double> ObervedLengthDistribution;
-  double MeanObservedLength;
-  std::vector<double> ScaledWordLengthProbabilityVector;
-  bool UpdateScaledWordLengthProbabilityVector;
+  std::vector<double> GeneratedLengthDistribution;       // length distribution of generated sentences
+  std::vector<double> ObervedLengthDistribution;         // length distribution of observed sentences
+  double MeanObservedLength;                             // mean lengh of observed sentences
+  std::vector<double> ScaledWordLengthProbabilityVector; // scaling vector for probabilites depending on word length
+  bool UpdateScaledWordLengthProbabilityVector;          // update sacling vector before ouput
 
-  double factorial(double n) const;
+  /* some internal functions */
+  // calculate factorial of n
+  double factorial(
+    double n
+  ) const;
+
+  // return word length probility
+  double WordLengthProbability(
+    int WordLength
+  ) const;
+  
+  // return scaling factor for probabilites
+  double GetScaledWordLengthProbability(
+    int WordLength
+  ) const;
+  
+  // set the generated length distribution 
+  void SetGeneratedLengthDistribution(
+    const std::vector<double> &GeneratedLengthDistribution_
+  );
+  
+  // set the observed length distribution
+  void SetObservedLengthDistribution(
+    const std::vector<double> &ObervedLengthDistribution_
+  );
+  
+  // set a fixed mean for the poison distribution
+  void SetDesiredLengthMean(
+    double DesiredLengthMean_
+  );
+  
+  // return scaling vector for probabilites depending on word length
+  const std::vector<double> &GetScaledWordLengthProbabilityVector();
 
 public:
-  double WordLengthProbability(int WordLength) const;
-  double GetScaledWordLengthProbability(int WordLength) const;
-  void SetGeneratedLengthDistribution(const std::vector<double> &GeneratedLengthDistribution_);
-  void SetObservedLengthDistribution(const std::vector<double> &ObervedLengthDistribution_);
-  void SetDesiredLengthMean(double DesiredLengthMean_);
-  const std::vector<double> &GetScaledWordLengthProbabilityVector();
+  /* interface */
+  // update scaling vector for probabilites
+  // depending on word lengths in language model
+  static void UpdateWHPYLMBaseProbabilitiesScale(
+    NHPYLM *LanguageModel,
+    int WordLengthModulation
+  );
 };
 
 #endif

@@ -12,6 +12,7 @@ src/*.kdev4
 test/Results
 test/WSJCAM0_WSJ0+1_Cross_Lattice/openfst/*.lat_16.000000
 test/WSJCAM0_WSJ0+1_Cross_Lattice/openfst/symbols.txt
+test/WSJCAM0_WSJ0+1_Cross_Lattice/openfst/input_arcs.txt
 test/WSJCAM0_Lattice/openfst/*.lat_10.000000
 test/WSJCAM0_Lattice/openfst/symbols.txt
 test/WSJCAM0_WSJ0+1_Cross_Lattice/htk/*.lat

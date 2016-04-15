@@ -39,7 +39,7 @@
 
 
    Author: Oliver Walter
-   
+
 
    Note: License for functions SampleWeights, SampGen and
    ParseSampleAndAddCharacterIdSequenceToDictionaryAndLexFst:
@@ -56,52 +56,29 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
-   
-   SampleWeights, SampGen and
-   ParseSampleAndAddCharacterIdSequenceToDictionaryAndLexFst: Modified
-   according to own needs (by Jahn Heymann (2013) and Oliver Walter (2014))
+
+
+   SampleWeights and SampGen: Modified according to own needs
+   (by Jahn Heymann (2013) and Oliver Walter (2014))
 */
 // ----------------------------------------------------------------------------
+#include <iostream>
 #include "fst/compose.h"
 #include <fst/shortest-path.h>
 #include "SampleLib.hpp"
-#include "FileReader.hpp"
 #include <beam-search.h>
 // #include "DebugLib.hpp"
 
 std::mutex SampleLib::mtx;
 
-int SampleLib::AddCharacterIdSequenceToDictionaryAndLexFST(const vector< int > &Characters, Dictionary *LanguageModel, LexFst *LexiconTransducer)
-{
-  WordIdAddedPair wIdAddedPair = LanguageModel->AddCharacterIdSequenceToDictionary(Characters.begin(), Characters.size());
-  if (wIdAddedPair.second && (LexiconTransducer != NULL)) {
-    LexiconTransducer->addWord(Characters.begin(), Characters.size(), wIdAddedPair.first);
-  }
-  return wIdAddedPair.first;
-}
-
-void SampleLib::RemoveWordsFromDictionaryLexFSTAndLM(const const_witerator &Word, int NumWords, NHPYLM *LanguageModel, LexFst *LexiconTransducer, int SentEndWordId)
-{
-//   std::cout << "Removing: ";
-//   DebugLib::PrintSentence(Word, NumWords, LanguageModel->GetId2CharacterSequenceVector());
-  for (int IdxWord = 0; IdxWord < NumWords; ++IdxWord) {
-    RemoveWordFromDictionaryLexFSTAndLM(Word + IdxWord, LanguageModel, LexiconTransducer, SentEndWordId);
-  }
-}
-
-void SampleLib::RemoveWordFromDictionaryLexFSTAndLM(const const_witerator &Word, NHPYLM *LanguageModel, LexFst *LexiconTransducer, int SentEndWordId)
-{
-//   std::cout << "Removing: " << *Word << " from LM" << std::endl;
-  if (LanguageModel->RemoveWordFromLm(Word) && (*Word != SentEndWordId)) {
-//     std::cout << "Removing: " << *Word << " from Lexicon and Transducer" << std::endl;
-    WordBeginLengthPair WordBeginLengh = LanguageModel->GetWordBeginLength(*Word);
-    LexiconTransducer->rmWord(WordBeginLengh.first, WordBeginLengh.second);
-    LanguageModel->RemoveWordFromDictionary(*Word);
-  }
-}
-
-void SampleLib::ComposeAndSampleFromInputLexiconAndLM(const fst::Fst< fst::LogArc > *InputFst, const fst::Fst< fst::LogArc > *LexiconTransducer, const NHPYLM *LanguageModel, int SentEndWordId, fst::VectorFst< fst::LogArc > *SampledFst, std::vector< LatticeWordSegmentationTimer::SimpleTimer > *tInSample, int beamWidth, bool UseViterby)
+void SampleLib::ComposeAndSampleFromInputLexiconAndLM(
+  const fst::Fst< fst::LogArc > *InputFst,
+  const fst::Fst< fst::LogArc > *LexiconTransducer,
+  const NHPYLM *LanguageModel,
+  int SentEndWordId,
+  fst::VectorFst< fst::LogArc > *SampledFst,
+  std::vector< LatticeWordSegmentationTimer::SimpleTimer > *tInSample,
+  int beamWidth, bool UseViterby)
 {
 //   std::cout << "Composing and Sampling: " << std::endl;
 
@@ -114,18 +91,11 @@ void SampleLib::ComposeAndSampleFromInputLexiconAndLM(const fst::Fst< fst::LogAr
   fst::ComposeFstOptions<fst::LogArc, PM> copts1(fst::CacheOptions(), PM11, PM21);
   fst::ComposeFst<fst::LogArc> Input_Unk_Lex(*InputFst, *LexiconTransducer, copts1);
 //   fst::ArcSortFst<fst::LogArc, fst::OLabelCompare<fst::LogArc> > Input_Unk_Lex_OSort(Input_Unk_Lex, fst::OLabelCompare<fst::LogArc>());
-//   OLookAhead::OLAM *OLAM12 = new OLookAhead::OLAM(Input_Unk_Lex_OSort, fst::MATCH_OUTPUT);
   (*tInSample)[0].AddTimeSinceStartToDuration();
 
+  // instantiate language model fst
   (*tInSample)[1].SetStart();
-//   std::cout << std::endl << "Label2Index.size() create: " << OLAM12->GetData()->Label2Index()->size() << std::endl;
-//   for (typename unordered_map<int, int>::const_iterator it = OLAM12->GetData()->Label2Index()->begin(); it != OLAM12->GetData()->Label2Index()->end(); ++it) {
-//     std::cout << "r(" << it->first << ")=" << it->second << std::endl;
-//   }
-//   OLookAhead::Reachable RD(OLAM12->GetData());
   NHPYLMFst LanguageModelFST(*LanguageModel, SentEndWordId, GetActiveWordIdsInFst(Input_Unk_Lex, LanguageModel->GetMaxNumWords()));
-//   NHPYLMFst LanguageModelFST(*LanguageModel, SentEndWordId, GetActiveWordIdsInFst(Input_Unk_Lex, LanguageModel->GetMaxNumWords()), &RD);
-//   PM *PM22 = new PM(LanguageModelFST, fst::MATCH_INPUT, RD.Relabel(PHI_SYMBOLID), false);
   (*tInSample)[1].AddTimeSinceStartToDuration();
 
   // compose with language model
@@ -134,6 +104,18 @@ void SampleLib::ComposeAndSampleFromInputLexiconAndLM(const fst::Fst< fst::LogAr
   PM *PM22 = new PM(LanguageModelFST, fst::MATCH_INPUT, PHI_SYMBOLID, false);
   fst::ComposeFstOptions<fst::LogArc, PM> copts2(fst::CacheOptions(), PM12, PM22);
   fst::ComposeFst<fst::LogArc> Input_Unk_Lex_LM(Input_Unk_Lex, LanguageModelFST, copts2);
+//   fst::ComposeFst<fst::LogArc> Input_Unk_Lex_LM(Input_Unk_Lex_OSort, LanguageModelFST, copts2);
+  (*tInSample)[2].AddTimeSinceStartToDuration();
+
+  // print input, lexicon, language model and composition results
+//   FileReader::PrintFST("lattice_debug/in.fst", LanguageModel->GetId2CharacterSequenceVector(), fst::VectorFst<fst::LogArc>(*InputFst), true, NAMESANDIDS);
+//   FileReader::PrintFST("lattice_debug/lex.fst", LanguageModel->GetId2CharacterSequenceVector(), fst::VectorFst<fst::LogArc>(*LexiconTransducer), true, NAMESANDIDS);
+//   FileReader::PrintFST("lattice_debug/in_lex.fst", LanguageModel->GetId2CharacterSequenceVector(), fst::VectorFst<fst::LogArc>(Input_Unk_Lex_OSort), true, NAMESANDIDS);
+//   FileReader::PrintFST("lattice_debug/in_lex.fst", LanguageModel->GetId2CharacterSequenceVector(), fst::VectorFst<fst::LogArc>(Input_Unk_Lex), true, NAMESANDIDS);
+//   FileReader::PrintFST("lattice_debug/lm.fst", LanguageModel->GetId2CharacterSequenceVector(), fst::VectorFst<fst::LogArc>(LanguageModelFST), true, NAMESANDIDS);
+//   FileReader::PrintFST("lattice_debug/in_lex_lm.fst", LanguageModel->GetId2CharacterSequenceVector(), fst::VectorFst<fst::LogArc>(Input_Unk_Lex_LM), true, NAMESANDIDS);
+
+  // use beamserach, if specified
   fst::VectorFst<fst::LogArc> *beamSearchFst = new fst::VectorFst<fst::LogArc>();
   if (beamWidth > 0) {
     fst::BeamTrim(Input_Unk_Lex_LM, beamSearchFst, beamWidth);
@@ -150,25 +132,8 @@ void SampleLib::ComposeAndSampleFromInputLexiconAndLM(const fst::Fst< fst::LogAr
 //  }
 //  std::cout << "Beam: " << arcCnt << " Arcs" << std::endl;
 
-//   OLookAhead::LACF *LACF = new OLookAhead::LACF(Input_Unk_Lex_OSort, LanguageModelFST, OLAM12, PM22);
-//   fst::ComposeFstImplOptions<OLookAhead::OLAM, PM, OLookAhead::LACF> copts2(fst::CacheOptions(), OLAM12, PM22, LACF);
-//   fst::ComposeFst<fst::LogArc> Input_Unk_Lex_LM(Input_Unk_Lex_OSort, LanguageModelFST, copts2);
-  (*tInSample)[2].AddTimeSinceStartToDuration();
-
   // sample segmentation
   (*tInSample)[3].SetStart();
-//   std::cout << std::endl << "Label2Index.size() before: " << LACF->GetMatcher1()->GetData()->Label2Index()->size() << std::endl;
-//   FileReader::PrintFST("lattice_debug/in.fst", LanguageModel->GetId2CharacterSequenceVector(), fst::VectorFst<fst::LogArc>(*InputFst), true, NAMESANDIDS);
-//   FileReader::PrintFST("lattice_debug/lex.fst", LanguageModel->GetId2CharacterSequenceVector(), fst::VectorFst<fst::LogArc>(*LexiconTransducer), true, NAMESANDIDS);
-//   FileReader::PrintFST("lattice_debug/in_lex.fst", LanguageModel->GetId2CharacterSequenceVector(), fst::VectorFst<fst::LogArc>(Input_Unk_Lex_OSort), true, NAMESANDIDS);
-//   FileReader::PrintFST("lattice_debug/in_lex.fst", LanguageModel->GetId2CharacterSequenceVector(), fst::VectorFst<fst::LogArc>(Input_Unk_Lex), true, NAMESANDIDS);
-//   FileReader::PrintFST("lattice_debug/lm.orig.fst", LanguageModel->GetId2CharacterSequenceVector(), fst::VectorFst<fst::LogArc>(OrigLanguageModelFST), true, NAMESANDIDS);
-//   FileReader::PrintFST("lattice_debug/lm.fst", LanguageModel->GetId2CharacterSequenceVector(), fst::VectorFst<fst::LogArc>(LanguageModelFST), true, NAMESANDIDS);
-//   FileReader::PrintFST("lattice_debug/in_lex_lm.fst", LanguageModel->GetId2CharacterSequenceVector(), fst::VectorFst<fst::LogArc>(Input_Unk_Lex_LM), true, NAMESANDIDS);
-//   std::cout << std::endl << "Label2Index.size() after: " << LACF->GetMatcher1()->GetData()->Label2Index()->size() << std::endl;
-//   for (typename unordered_map<int, int>::const_iterator it = OLAM12->GetData()->Label2Index()->begin(); it != OLAM12->GetData()->Label2Index()->end(); ++it) {
-//     std::cout << "r(" << it->first << ")=" << it->second << std::endl;
-//   }
   if (!UseViterby) {
     if (beamWidth > 0) {
       SampGen(*beamSearchFst, SampledFst, 1);
@@ -194,7 +159,9 @@ void SampleLib::ComposeAndSampleFromInputLexiconAndLM(const fst::Fst< fst::LogAr
 //   std::cout << "Sampling done!" << std::endl;
 }
 
-vector< bool > SampleLib::GetActiveWordIdsInFst(const fst::Fst< fst::LogArc > &SegmentFST, int MaxNumWords)
+vector< bool > SampleLib::GetActiveWordIdsInFst(
+  const fst::Fst< fst::LogArc > &SegmentFST,
+  int MaxNumWords)
 {
 //   int NumActiveWords = 0;
 //   int NumKnownWords = LanguageModel.GetId2Word().size();
@@ -245,14 +212,16 @@ unsigned SampleLib::SampleWeights(vector< float > *ws)
   }
 
   if (i == ws->size()) {
-    cout << "WARNING: Sampling failed, probability mass left at end of cycle";
+    std::cout << "WARNING: Sampling failed, probability mass left at end of cycle";
     i--;
   }
   return i;
 }
 
 // Copyright 2010, Graham Neubig, modified by Jahn Heymann (2013) and Oliver Walter (2014) //
-void SampleLib::SampGen(const fst::Fst< fst::LogArc > &ifst, fst::MutableFst< fst::LogArc > *ofst, unsigned int nbest)
+void SampleLib::SampGen(const fst::Fst< fst::LogArc > &ifst,
+                        fst::MutableFst< fst::LogArc > *ofst,
+                        unsigned int nbest)
 {
   typedef fst::Fst<fst::LogArc> F;
   typedef typename F::Weight W;
@@ -299,7 +268,10 @@ void SampleLib::SampGen(const fst::Fst< fst::LogArc > &ifst, fst::MutableFst< fs
     for (fst::ArcIterator< F > aiter(ifst, s); !aiter.Done(); aiter.Next()) {
       const fst::LogArc &a = aiter.Value();
       if (std::isnan(a.weight.Value())) {
-        cout << "stateWeights[" << a.nextstate << "]: (" << stateWeights[a.nextstate] << "+(" << stateWeights[s] << "*" << a.weight << "<-" << s << "[" << a.ilabel << "/" << a.olabel << "]" << "))" << endl;
+        std::cout << "stateWeights[" << a.nextstate << "]: ("
+                  << stateWeights[a.nextstate] << "+(" << stateWeights[s]
+                  << "*" << a.weight << "<-" << s << "[" << a.ilabel
+                  << "/" << a.olabel << "]" << "))" << endl;
       }
       stateWeights[a.nextstate] = fst::Plus(stateWeights[a.nextstate], fst::Times(stateWeights[s], a.weight));
       //cout << " -> " << stateWeights[a.nextstate] << " [" << a.olabel << "]" << endl;
@@ -316,7 +288,7 @@ void SampleLib::SampGen(const fst::Fst< fst::LogArc > &ifst, fst::MutableFst< fs
     throw std::runtime_error("Sampling cannot be performed on cyclic FSTs");
   }
 
-  fflush(stdout);
+  std::cout.flush();
   // sample the states backwards from the final state
   ofst->DeleteStates();
   ofst->AddState();
@@ -359,89 +331,4 @@ void SampleLib::SampGen(const fst::Fst< fst::LogArc > &ifst, fst::MutableFst< fs
       currState = myArc.nextstate;
     }
   }
-}
-
-void SampleLib::ParseSampleAndAddCharacterIdSequenceToDictionaryLexFstAndLM(const fst::Fst< fst::LogArc > &Sample, int SentEndWordId, NHPYLM *LanguageModel, LexFst *LexiconTransducer, vector< WordId > *ret)
-{
-//   std::cout << "Parsing: " << std::endl;
-  ParseSampleAndAddCharacterIdSequenceToDictionaryAndLexFst(Sample, LanguageModel, LexiconTransducer, ret);
-  int WHPYLMContextLenght = LanguageModel->GetWHPYLMOrder() - 1;
-  ret->insert(ret->begin(), WHPYLMContextLenght, SentEndWordId);
-
-//   std::cout << "Adding:   ";
-//   DebugLib::PrintSentence((*ret).begin(), (*ret).size(), LanguageModel->GetId2CharacterSequenceVector());
-  LanguageModel->AddWordSequenceToLm(*ret);
-}
-
-// Copyright 2010, Graham Neubig, modified by Jahn Heymann (2013) and Oliver Walter (2014) //
-void SampleLib::ParseSampleAndAddCharacterIdSequenceToDictionaryAndLexFst(const fst::Fst< fst::LogArc > &Sample, Dictionary *Dict, LexFst *LexiconTransducer, vector< WordId > *ret)
-{
-  ret->clear();
-  std::vector<CharId> charBuf;
-  int sid = Sample.Start();
-  int WordsBegin = Dict->GetWordsBegin();
-  // continue until there are no more left
-//   std::cout << "Parsing:   " << std::endl << std::flush;
-  while (true) {
-    fst::ArcIterator<fst::Fst<fst::LogArc> > ai(Sample, sid);
-    if (ai.Done()) {
-      break;
-    }
-    const fst::LogArc &arc = ai.Value();
-    // add known words
-    if (arc.olabel >= WordsBegin) {
-      if (charBuf.size() > 0) {
-        throw std::runtime_error("Word with non-empty buffer (/unk required)");
-      }
-      WordId wid = arc.olabel;
-      ret->push_back(wid);
-//       std::cout << "[Existing word: " << ret->back() << "] ";
-    }
-    // handle the end of unknown word symbol
-    else if (arc.olabel == UNKEND_SYMBOLID) {
-      if (charBuf.size() == 0) {
-        throw std::runtime_error("End of word symbol with empty buffer");
-      }
-      ret->push_back(SampleLib::AddCharacterIdSequenceToDictionaryAndLexFST(charBuf, Dict, LexiconTransducer));
-      charBuf.clear();
-//       std::cout << "[New word: " << ret->back() << "] ";
-    }
-    // handle unknown word characters
-    else if (arc.olabel > UNKEND_SYMBOLID) {
-      charBuf.push_back(arc.olabel);
-//       std::cout << charBuf.back() << " ";
-    }
-    sid = arc.nextstate;
-  }
-  // clean up the remaining buffer
-  if (charBuf.size() > 0) {
-    ret->push_back(SampleLib::AddCharacterIdSequenceToDictionaryAndLexFST(charBuf, Dict, LexiconTransducer));
-  }
-//   std::cout << std::endl;
-}
-
-void SampleLib::ParseSampleAndAddCharacterIdSequenceToDictionary(const fst::Fst< fst::LogArc > &Sample, Dictionary *Dict, std::vector<int> *ret)
-{
-  ParseSampleAndAddCharacterIdSequenceToDictionaryAndLexFst(Sample, Dict, NULL, ret);
-}
-
-fst::VectorFst<fst::StdArc> SampleLib::logArcToStdArc(fst::Fst<fst::LogArc> const &iFst)
-{
-  fst::VectorFst<fst::StdArc> ret;
-  for (fst::StateIterator< fst::Fst<fst::LogArc> > siter(iFst); !siter.Done(); siter.Next()) {
-    ret.AddState();
-  }
-  for (fst::StateIterator< fst::Fst<fst::LogArc> > siter(iFst); !siter.Done(); siter.Next()) {
-    int s = siter.Value();
-    if (iFst.Final(s) != fst::LogArc::Weight::Zero()) {
-      ret.SetFinal(s, 0);
-    }
-    //cout << s << " ";
-    for (fst::ArcIterator< fst::Fst<fst::LogArc> > aiter(iFst, s); !aiter.Done(); aiter.Next()) {
-      fst::LogArc arc = aiter.Value();
-      ret.AddArc(s, fst::StdArc(arc.ilabel, arc.olabel, arc.weight.Value(), arc.nextstate));
-    }
-  }
-  ret.SetStart(iFst.Start());
-  return ret;
 }

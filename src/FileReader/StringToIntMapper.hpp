@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 /**
-   File: definitions.hpp
+   File: StringToIntMapper.hpp
 
    Status:         Version 1.0
    Language: C++
@@ -48,7 +48,7 @@
 
    E-Mail: walter@nt.uni-paderborn.de
 
-   Description: some definitions used in the segmenter and fst
+   Description: mapping from string to integer (character id)
 
    Limitations: -
 
@@ -57,51 +57,43 @@
    2014         Walter       Initial
 */
 // ----------------------------------------------------------------------------
-#ifndef _DEFINES_HPP_
-#define _DEFINES_HPP_
+#ifndef _STRINGTOINTMAPPER_HPP_
+#define _STRINGTOINTMAPPER_HPP_
 
-#include <unordered_map>
-#include <fst/matcher.h>
-#include <fst/compose-filter.h>
-#include <fst/lookahead-filter.h>
-#include "NHPYLM/definitions.hpp"
+#include "definitions.hpp"
 
-#define EPS_SYMBOL         "<eps>"
-#define EPS_SYMBOLID       0
-#define PHI_SYMBOL         "<phi>"
-#define PHI_SYMBOLID       1
-#define UNKBEGIN_SYMBOL    "<unk>"
-#define UNKBEGIN_SYMBOLID  2
-#define UNKEND_SYMBOL      "</unk>"
-#define UNKEND_SYMBOLID    3
-#define SENTSTART_SYMBOL   "<s>"
-#define SENTSTART_SYMBOLID 4
-#define SENTEND_SYMBOL     "</s>"
-#define SENTEND_SYMBOLID   5
-#define CHARACTERSBEGIN    6
+/* map from string to integer */
+class StringToIntMapper {
+  StringToIntMap StringToInt;           // map string -> int
+  std::vector<std::string> IntToString; // map int -> string
 
-typedef int CharId; // alias for character id
-typedef int WordId; // alias for word id
-typedef std::unordered_map<std::string, int> StringToIntMap;  // string to integer map
-typedef fst::PhiMatcher<fst::SortedMatcher<fst::Fst<fst::LogArc> > > PM; // phi matcher for composition with lexicon and language model transducer
-
-// look ahead compose filter for LogArc to allow weight and label pushing an phi matching.
-class OLookAhead {
 public:
-  typedef fst::LogArc ARC;
-  typedef fst::Fst<ARC> FST;
-  typedef fst::SortedMatcher<FST> SM;
-  typedef fst::LabelLookAheadMatcher < SM, fst::kOutputLookAheadMatcher | fst::kLookAheadEpsilons | fst::kLookAheadWeight | fst::kLookAheadPrefix | fst::kLookAheadNonEpsilonPrefix > OLAM;
-  typedef fst::AltSequenceComposeFilter<OLAM, PM> ASCF;
-  typedef fst::LookAheadComposeFilter<ASCF, OLAM, PM, fst::MATCH_OUTPUT> LACF;
-  typedef fst::PushWeightsComposeFilter<LACF, OLAM, PM> PWCF;
-  typedef fst::PushLabelsComposeFilter<PWCF, OLAM, PM> PLCF;
-  typedef fst::LabelReachableData<typename ARC::Label> LRD;
-  typedef fst::LabelReachable<ARC, fst::DefaultAccumulator<ARC>, LRD> Reachable;
-};
+  static const int NOT_FOUND = -1;
 
-enum LatticeFileTypes {CMU_FST, HTK_FST, OPEN_FST, TEXT}; // file types for input lattices
-enum InputTypes {INPUT_FST, INPUT_TEXT};                  // input modes: fst or text
-enum SymbolWriteModes {NONE, NAMES, NAMESANDIDS};         // modes for symbol output in fst printing
+
+  /* interface */
+  // inserts string to map and returns int for string
+  int Insert(
+    const std::string &str
+  );
+  
+  // get int for string
+  int GetInt(
+    const std::string &str
+  ) const;
+  
+  // get string for int
+  const std::string &GetString(
+    int id
+  ) const;
+  
+  // get the vector containing int to string mapping
+  const std::vector<std::string> &GetIntToStringVector() const;
+
+  // get number strings in mapper  
+  long GetSize() const {
+    return IntToString.size();
+  }
+};
 
 #endif

@@ -68,7 +68,7 @@ class LatticeWordSegmentationTimer {
 public:
   /* class for a simple timer */
   class SimpleTimer {
-    std::chrono::high_resolution_clock::time_point Start; // s
+    std::chrono::high_resolution_clock::time_point Start; // starting pint of timer
     std::chrono::duration<double> Duration;               // duration spend for the timer
 
   public:
@@ -78,22 +78,30 @@ public:
     double GetDuration() const;         // return duration
   };
 
+
   /* timing objects publicly available */
-  SimpleTimer tLexFst;                  // time for building lexicon fst
-  SimpleTimer tRemove;                  // time for removing samples from lexicon, lexfst and language model
-  SimpleTimer tSample;                  // time for sampling a new segmentation
-  SimpleTimer tParseAndAdd;             // time for parsing and adding
-  SimpleTimer tHypSample;               // time for resampling of hyper parameters
-  SimpleTimer tCalcWER;                 // time for calculating the word error rate
-  SimpleTimer tCalcPerplexity;          // time for calculating the perplexity
-  SimpleTimer tCalcPER;
+  SimpleTimer tLexFst;         // time for building lexicon fst
+  SimpleTimer tRemove;         // time for removing samples from lexicon, lexfst and language model
+  SimpleTimer tSample;         // time for sampling a new segmentation
+  SimpleTimer tParseAndAdd;    // time for parsing and adding
+  SimpleTimer tHypSample;      // time for resampling of hyper parameters
+  SimpleTimer tCalcWER;        // time for calculating the word error rate
+  SimpleTimer tCalcPerplexity; // time for calculating the perplexity
+  SimpleTimer tCalcPER;        // time for calculating the phoneme error rate
   std::vector<std::vector<SimpleTimer> > tInSamples; // times for the different tasks in the sampling threads
 
+
   /* constructor */
-  LatticeWordSegmentationTimer(int MaxNumThreads, int NumTimersPerThread); // construction for a given numer of threads and number of subtimers per thread
+  // construction for a given numer of threads and number of subtimers per thread
+  LatticeWordSegmentationTimer(
+    int MaxNumThreads,
+    int NumTimersPerThread
+  );
+
 
   /* interface */
-  void PrintTimingStatistics() const; // print the statistics
+  // print the statistics
+  void PrintTimingStatistics() const; 
 };
 
 #endif

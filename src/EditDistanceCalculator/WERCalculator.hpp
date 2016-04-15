@@ -60,9 +60,10 @@
 #ifndef _WERCALCULATOR_HPP_
 #define _WERCALCULATOR_HPP_
 
-#include "NHPYLM/Dictionary.hpp"
+#include "../NHPYLM/Dictionary.hpp"
 #include "EditDistanceCalculator.hpp"
 
+/* class to calculate word error rate of input sentences */
 class WERCalculator : public EditDistanceCalculator {
   Dictionary dict;
   std::vector<int> LexiconCorrNFoundNRef;
@@ -71,12 +72,33 @@ class WERCalculator : public EditDistanceCalculator {
   std::vector<int> InputAndReferenceIds;
   int TotalNumReferenceWords;
 
-  void TrimInputSentences(const vector< vector< int > > &InputSentences_, int WHPYLMContextLength);
-  void ParseReferenceFsts(const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts);
+
+  /* internal functions */
+  void TrimInputSentences(
+    const vector< vector< int > > &InputSentences_,
+    int WHPYLMContextLength
+  );
+
+  void ParseReferenceFsts(
+    const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts);
+  
   void CalcLexiconCorrNFoundNRef();
 
 public:
-  WERCalculator(const vector< vector< int > > &InputSentences_, const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts_, const Dictionary &dict_, int WHPYLMContextLength, unsigned int NumThreads_, const vector< string > &FileNames_, const string &Prefix_, bool OutputEditOperations_);
+  /* constructor */
+  WERCalculator(
+    const vector< vector< int > > &InputSentences_,
+    const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts_,
+    const Dictionary &dict_,
+    int WHPYLMContextLength,
+    unsigned int NumThreads_,
+    const vector< string > &FileNames_,
+    const string &Prefix_,
+    bool OutputEditOperations_
+  );
+
+  
+  /* interface */
   const vector< int > &GetLexiconCorrNFoundNRef() const;
 };
 

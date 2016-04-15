@@ -46,7 +46,7 @@
 
 const int NHPYLMFst::kFileVersion = 1;
 
-NHPYLMFst::NHPYLMFst(const NHPYLM &LanguageModel_, int SentEndWordId_, const vector< bool > &ActiveWords_, OLookAhead::Reachable *RD_) :
+NHPYLMFst::NHPYLMFst(const NHPYLM &LanguageModel_, int SentEndWordId_, const vector< bool > &ActiveWords_) :
   LanguageModel(LanguageModel_),
   SentEndWordId(SentEndWordId_),
   CHPYLMOrder(LanguageModel_.GetCHPYLMOrder()),
@@ -57,8 +57,7 @@ NHPYLMFst::NHPYLMFst(const NHPYLM &LanguageModel_, int SentEndWordId_, const vec
   FSTType("vector"),
   ActiveWords(ActiveWords_),
   FallbackSymbolId(PHI_SYMBOLID),
-  Arcs(LanguageModel_.GetFinalContextId() + 1),
-  RD(RD_)
+  Arcs(LanguageModel_.GetFinalContextId() + 1)
 {
 }
 
@@ -151,17 +150,9 @@ const fst::LogArc *NHPYLMFst::GetArcs(StateId s) const
     int NumTransitions = Transitions.NextContextIds.size();
     for (int TransitionIdx = 0; TransitionIdx < NumTransitions; TransitionIdx++) {
       if (Transitions.Words.at(TransitionIdx) != PHI_SYMBOLID) {
-        if (RD) {
-          State.push_back(fst::LogArc(RD->Relabel(Transitions.Words.at(TransitionIdx)), Transitions.Words.at(TransitionIdx), -log(Transitions.Probabilities.at(TransitionIdx)), Transitions.NextContextIds.at(TransitionIdx)));
-        } else {
-          State.push_back(fst::LogArc(Transitions.Words.at(TransitionIdx), Transitions.Words.at(TransitionIdx), -log(Transitions.Probabilities.at(TransitionIdx)), Transitions.NextContextIds.at(TransitionIdx)));
-        }
+        State.push_back(fst::LogArc(Transitions.Words.at(TransitionIdx), Transitions.Words.at(TransitionIdx), -log(Transitions.Probabilities.at(TransitionIdx)), Transitions.NextContextIds.at(TransitionIdx)));
       } else {
-        if (RD) {
-          State.push_back(fst::LogArc(RD->Relabel(FallbackSymbolId), EPS_SYMBOLID, -log(Transitions.Probabilities.at(TransitionIdx)), Transitions.NextContextIds.at(TransitionIdx)));
-        } else {
-          State.push_back(fst::LogArc(FallbackSymbolId, EPS_SYMBOLID, -log(Transitions.Probabilities.at(TransitionIdx)), Transitions.NextContextIds.at(TransitionIdx)));
-        }
+        State.push_back(fst::LogArc(FallbackSymbolId, EPS_SYMBOLID, -log(Transitions.Probabilities.at(TransitionIdx)), Transitions.NextContextIds.at(TransitionIdx)));
       }
     }
     std::sort(State.begin(), State.end(), NHPYLMFst::iLabelSort);

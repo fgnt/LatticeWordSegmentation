@@ -1,7 +1,13 @@
 // ----------------------------------------------------------------------------
 /**
-   File: StringToIntMapper.cpp
-   Copyright (c) <2013> <University of Paderborn>
+   File: Evaluate.hpp
+
+   Status:         Version 1.0
+   Language: C++
+
+   License: UPB licence
+
+   Copyright (c) <2016> <University of Paderborn>
    Permission is hereby granted, free of charge, to any person
    obtaining a copy of this software and associated documentation
    files (the "Software"), to deal in the Software without restriction,
@@ -38,40 +44,78 @@
    if it was used for them.
 
 
-   Author: Oliver Walter
+   Author: Thomas Glarner
+
+   E-Mail: glarner@nt.uni-paderborn.de
+
+   Description: io class for lattice reading, processing and writing
+
+   Limitations: -
+
+   Change History:
+   Date         Author       Description
+   2016         Glarner      Initial
 */
 // ----------------------------------------------------------------------------
-#include "StringToIntMapper.hpp"
+#ifndef _EVALUATE_HPP_
+#define _EVALUATE_HPP_
 
-int StringToIntMapper::Insert(const std::string &str)
-{
-  StringToIntMap::iterator it = StringToInt.find(str);
-  if (it == StringToInt.end()) {
-    int NewId = StringToInt.size();
-    StringToInt.insert(make_pair(str, NewId));
-    IntToString.push_back(str);
-    return NewId;
-  } else {
-    return it->second;
-  }
-}
+#include "../FileReader/FileData.hpp"
+#include "../ParameterParser/ParameterParser.hpp"
+#include "../LatticeWordSegmentationTimer.hpp"
+#include "../NHPYLM/NHPYLM.hpp"
 
-int StringToIntMapper::GetInt(const std::string &str) const
-{
-  StringToIntMap::const_iterator it = StringToInt.find(str);
-  if (it == StringToInt.end()) {
-    return -1;
-  } else {
-    return it->second;
-  }
-}
+class Evaluate{
+  const ParameterStruct& Params;
+  const FileData& InputFileData;
+  LatticeWordSegmentationTimer& Timer;
+  const NHPYLM* LanguageModel;
 
-const std::string &StringToIntMapper::GetString(int id) const
-{
-  return IntToString.at(id);
-}
+  /* internal functions */
+  void OutputPhonemeErrorRate(
+    const std::vector<LogVectorFst>& SampledFsts,
+    bool OutputEditOperations,
+    std::size_t IdxIter
+  );
 
-const std::vector< std::string > &StringToIntMapper::GetIntToStringVector() const
-{
-  return IntToString;
-}
+  void OutputWordErrorRate(
+    const std::vector<std::vector<int>>& SampledSentences,
+    bool OutputEditOperations,
+    std::size_t IdxIter
+  );
+
+  std::string BuildPrefix(
+    std::string specifier,
+    std::size_t IdxIter
+  );
+
+public:
+  /* constructor */
+  Evaluate(
+    const ParameterStruct& Params,
+    const FileData& InputFileData,
+    LatticeWordSegmentationTimer& Timer,
+    const NHPYLM* LanguageModel
+  ):
+    Params(Params),
+    InputFileData(InputFileData),
+    Timer(Timer),
+    LanguageModel(LanguageModel) {};
+
+
+  /* interface */
+  void WriteSentencesToOutputFiles(
+    const std::vector<std::vector<int>>& SampledSentences,
+    const std::vector<std::vector<ArcInfo>>& TimedSampledSentences,
+    std::size_t IdxIter
+  );
+
+  void OutputMeasureStatistics(
+    const std::vector<std::vector<int>>& SampledSentences,
+    const std::vector<LogVectorFst>& SampledFsts,
+    std::size_t IdxIter
+  );
+};
+
+
+#endif // _EVALUATE_HPP_

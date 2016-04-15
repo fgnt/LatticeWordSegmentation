@@ -41,12 +41,15 @@
    Author: Oliver Walter
 */
 // ----------------------------------------------------------------------------
+#include <cstdlib>
+#include <ctime>
 #include "LatticeWordSegmentation.hpp"
+#include "FileReader/FileReader.hpp"
 
 int main(int argc, const char **argv)
 {
   // initialize random seed
-  srand(time(NULL));
+  std::srand(std::time(nullptr));
 
   // print command line parameters
   for (int IdxArg = 0; IdxArg < argc; IdxArg++) {
@@ -54,8 +57,14 @@ int main(int argc, const char **argv)
   }
   std::cout << std::endl;
 
+  // Parse command line arguments
+  ParameterParser Parser(argc, argv);
+
+  // Parse Input Files into FST data structures
+  FileReader Reader(Parser.GetParameters());
+  FileData InputFileData = Reader.GetInputFileData();
   // initialize the segmenter
-  LatticeWordSegmentation Segmenter(argc, argv);
+  LatticeWordSegmentation Segmenter(Parser.GetParameters(), InputFileData);
 
   // do the segmentation
   Segmenter.DoWordSegmentation();

@@ -42,20 +42,19 @@
 */
 // ----------------------------------------------------------------------------
 #include "PERCalculator.hpp"
-#include "definitions.hpp"
 
-PERCalculator::PERCalculator(const vector< fst::VectorFst< fst::LogArc > > &InputFsts, const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts, const vector< string > &Id2CharacterSequenceVector, unsigned int NumThreads_, const std::vector<std::string> &FileNames_, const std::string &Prefix_, bool OutputEditOperations_) :
+PERCalculator::PERCalculator(const vector< fst::VectorFst< fst::LogArc > > &InputFsts, const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts, const vector< string > &Id2CharacterSequenceVector, unsigned int NumThreads_, const std::vector<std::string> &FileNames_, const std::string &Prefix_, bool OutputEditOperations_, const std::vector<ArcInfo> &InputArcInfos_) :
   EditDistanceCalculator(NumThreads_, FileNames_, Prefix_, OutputEditOperations_)
 {
-  ParseFsts(InputFsts, &InputSentences);
-  ParseFsts(ReferenceFsts, &ReferenceSentences);
+  ParseFsts(InputFsts, &InputSentences, InputArcInfos_);
+  ParseFsts(ReferenceFsts, &ReferenceSentences, std::vector<ArcInfo>());
   InputAndReferenceIds.resize(Id2CharacterSequenceVector.size() - CHARACTERSBEGIN);
   std::iota(InputAndReferenceIds.begin(), InputAndReferenceIds.end(), CHARACTERSBEGIN);
 
   SetInputAndReferenceSentences(InputSentences, ReferenceSentences, InputAndReferenceIds, Id2CharacterSequenceVector);
 }
 
-void PERCalculator::ParseFsts(const vector< fst::VectorFst< fst::LogArc > > &Fsts, vector< vector< int > > *Sentences)
+void PERCalculator::ParseFsts(const vector< fst::VectorFst< fst::LogArc > > &Fsts, vector< vector< int > > *Sentences, const std::vector<ArcInfo> &InputArcInfos_)
 {
   Sentences->clear();
   Sentences->resize(Fsts.size());
@@ -71,8 +70,12 @@ void PERCalculator::ParseFsts(const vector< fst::VectorFst< fst::LogArc > > &Fst
         break;
       }
       const fst::LogArc &arc = ai.Value();
-      if (arc.ilabel >= CHARACTERSBEGIN) {
-        Sentences->at(IdxSentence).push_back(arc.ilabel);
+      int ilabel = arc.ilabel;
+      if (!InputArcInfos_.empty()) {
+        ilabel = InputArcInfos_[ilabel].label;
+      }
+      if (ilabel >= CHARACTERSBEGIN) {
+        Sentences->at(IdxSentence).push_back(ilabel);
       }
       sid = arc.nextstate;
     }

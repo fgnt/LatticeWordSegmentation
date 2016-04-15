@@ -41,7 +41,6 @@
    Author: Oliver Walter
 */
 // ----------------------------------------------------------------------------
-#include <algorithm>
 #include <fst/compose.h>
 #include <fst/shortest-path.h>
 #include <thread>

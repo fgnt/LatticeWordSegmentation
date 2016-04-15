@@ -63,17 +63,26 @@
 #include <sparsehash/dense_hash_map>
 #include <boost/functional/hash.hpp>
 
-#define EOS          5
-#define SOS          4
-#define EOW          3
-#define SOW          2
-#define PHI          1
-#define UNKNOWN -32766
-#define DELETED -32767
-#define EMPTY   -32768
 #define PrintDebugHeader std::cout << __FILE__ << " line:" << __LINE__ << " funtion:" << __FUNCTION__
 
-enum WordRemoveStatus {NONEREMOVED, TABLE, TABLE_WORD, TABLE_WORD_RESTAURANT}; // was has been removed: NONEREMOVED - Nothing, TABLE - a table for the word, TABLE_WORD - the word has been removed from the restaurant, TABLE_WORD_RESTAURANT - the restaurant has been removed
+enum SpecialSyms{
+  EOS = 5,
+  SOS = 4,
+  EOW = 3,
+  SOW = 2,
+  PHI = 1,
+  UNKNOWN = -32766,
+  DELETED = -32767,
+  EMPTY = -32768
+};
+
+// What has been removed:
+enum WordRemoveStatus {
+  NONEREMOVED,          // Nothing,
+  TABLE,                // a table for the word,
+  TABLE_WORD,           // the word has been removed from the restaurant
+  TABLE_WORD_RESTAURANT // the restaurant has been removed
+};
 
 typedef std::vector<int>::iterator citerator; // vector of characters iterator
 typedef std::vector<int>::iterator witerator; // vector of words iterator

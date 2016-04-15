@@ -6,7 +6,7 @@ cd ..
 
 mkdir -p build
 cd build
-cmake ../src
+cmake -DCMAKE_BUILD_TYPE=Release ../src
 make
 cd ..
 

@@ -56,9 +56,8 @@
    Date         Author       Description
    2014         Walter       Initial
 
-   
-   Note: License for functions SampleWeights, SampGen and
-   ParseSampleAndAddCharacterIdSequenceToDictionaryAndLexFst:
+
+   Note: License for functions SampleWeights and SampGen:
    Copyright 2010, Graham Neubig
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -72,10 +71,9 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
-   
-   Note Change History: for functions SampleWeights, SampGen and
-   ParseSampleAndAddCharacterIdSequenceToDictionaryAndLexFst:
+
+
+   Note Change History: for functions SampleWeights and SampGen:
    Date         Author       Description
    2010         Neubig       Inital
    2013         Heymann      Modifications to own needs
@@ -93,22 +91,31 @@
 class SampleLib {
   static std::mutex mtx;
 
-  inline static std::vector< bool > GetActiveWordIdsInFst(const fst::Fst< fst::LogArc > &SegmentFST, int MaxNumWords);                                      // find all active words in the word fst
+  // find all active words in the word fst
+  inline static std::vector< bool > GetActiveWordIdsInFst(
+    const fst::Fst< fst::LogArc > &SegmentFST,
+    int MaxNumWords);
 
-  inline static void RemoveWordFromDictionaryLexFSTAndLM(const const_witerator &Word, NHPYLM *LanguageModel, LexFst *LexiconTransducer, int SentEndWordId); // remove given word from dictionary, lexicon transducer and language model
+  // generate sample from weighted input lattice
+  inline static void SampGen(const fst::Fst< fst::LogArc > &ifst,
+                             fst::MutableFst< fst::LogArc > *ofst,
+                             unsigned int nbest);
 
-  inline static void SampGen(const fst::Fst< fst::LogArc > &ifst, fst::MutableFst< fst::LogArc > *ofst, unsigned int nbest);                                // generate sample from weighted input lattice
-  inline static unsigned SampleWeights(std::vector<float> *ws);                                                                                             // used to draw a discrete sample from log probability vector
-
-  inline static void ParseSampleAndAddCharacterIdSequenceToDictionaryAndLexFst(const fst::Fst< fst::LogArc > &Sample, Dictionary *Dict, LexFst *LexiconTransducer, vector< WordId > *ret); // parse sampled fst and add character id sequence to dictionary, also add new character id sequences to lexicon transducer
-  inline static int AddCharacterIdSequenceToDictionaryAndLexFST(const std::vector<int> &Characters, Dictionary *Dict, LexFst *LexiconTransducer);           // add character id sequence to dictionary and add new sewuences to lexicon transducer lexicon fst
+  // used to draw a discrete sample from log probability vector
+  inline static unsigned SampleWeights(
+    std::vector<float> *ws);
 
 public:
-  static void RemoveWordsFromDictionaryLexFSTAndLM(const const_witerator &Word, int NumWords, NHPYLM *LanguageModel, LexFst *LexiconTransducer, int SentEndWordId);                                            // remove words from language model and from lexicon fst and dictionary if word count is zero
-  static void ComposeAndSampleFromInputLexiconAndLM(const fst::Fst< fst::LogArc > *InputFst, const fst::Fst< fst::LogArc > *LexiconTransducer, const NHPYLM *LanguageModel, int SentEndWordId, fst::VectorFst< fst::LogArc > *SampledFst, vector< LatticeWordSegmentationTimer::SimpleTimer > *tInSample, int beamWidth, bool UseViterby); // compose with lexicon fst and language model fst and samle output fst
-  static void ParseSampleAndAddCharacterIdSequenceToDictionaryLexFstAndLM(const fst::Fst< fst::LogArc > &Sample, int SentEndWordId, NHPYLM *LanguageModel, LexFst *LexiconTransducer, vector< WordId > *ret);  // parse sampled fst and add character id sequence to dictionary and language model, also add new character id sequences to lexicon transducer
-  static void ParseSampleAndAddCharacterIdSequenceToDictionary(const fst::Fst< fst::LogArc > &Sample, Dictionary *Dict, std::vector<int> *ret);                                                                // parse character lattice and add word ids to dictionary and return vector of word Ids
-  static fst::VectorFst<fst::StdArc> logArcToStdArc(fst::Fst<fst::LogArc> const &iFst);
+  // compose with lexicon fst and language model fst and samle output fst
+  static void ComposeAndSampleFromInputLexiconAndLM(
+    const fst::Fst< fst::LogArc > *InputFst,
+    const fst::Fst< fst::LogArc > *LexiconTransducer,
+    const NHPYLM *LanguageModel,
+    int SentEndWordId,
+    fst::VectorFst< fst::LogArc > *SampledFst,
+    vector< LatticeWordSegmentationTimer::SimpleTimer > *tInSample,
+    int beamWidth,
+    bool UseViterby);
 };
 
 #endif

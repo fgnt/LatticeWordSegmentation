@@ -383,7 +383,7 @@ std::vector< int > NHPYLM::GetTotalCountPerLevelFor(const std::string &LM, const
   }
 }
 
-std::vector< std::vector< int > > NHPYLM::Generate(std::string Mode, int NumWorsdOrCharacters, int SentEndWordId, std::vector<double> *GeneratedWordLengthDistribution_)
+std::vector< std::vector< int > > NHPYLM::Generate(std::string Mode, int NumWorsdOrCharacters, int SentEndWordId, std::vector<double> *GeneratedWordLengthDistribution_) const
 {
   if (Mode == "CHPYLM") {
     /* build vector of character ids */

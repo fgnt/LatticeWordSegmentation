@@ -42,10 +42,20 @@
 */
 // ----------------------------------------------------------------------------
 #include "WERCalculator.hpp"
-#include "SampleLib.hpp"
+#include "../ParseLib.hpp"
 
-WERCalculator::WERCalculator(const vector< vector< int > > &InputSentences_, const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts_, const Dictionary &dict_, int WHPYLMContextLength, unsigned int NumThreads_, const std::vector<std::string> &FileNames_, const std::string &Prefix_, bool OutputEditOperations_) :
-  EditDistanceCalculator(NumThreads_, FileNames_, Prefix_, OutputEditOperations_),
+WERCalculator::WERCalculator(
+  const vector< vector< int > > &InputSentences_,
+  const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts_,
+  const Dictionary &dict_,
+  int WHPYLMContextLength,
+  unsigned int NumThreads_,
+  const std::vector<std::string> &FileNames_,
+  const std::string &Prefix_,
+  bool OutputEditOperations_
+) :
+  EditDistanceCalculator(NumThreads_, FileNames_,
+                         Prefix_, OutputEditOperations_),
   dict(dict_),
   LexiconCorrNFoundNRef(3, 0),
   TotalNumReferenceWords(0)
@@ -57,33 +67,56 @@ WERCalculator::WERCalculator(const vector< vector< int > > &InputSentences_, con
 //   std::cout << "Parsing reference sentences" << std::endl;
   ParseReferenceFsts(ReferenceFsts_);
 //   std::cout << "Setting input and reference sentences" << std::endl;
-  SetInputAndReferenceSentences(InputSentences, ReferenceSentences, InputAndReferenceIds, dict.GetId2CharacterSequenceVector());
+  SetInputAndReferenceSentences(InputSentences,
+                                ReferenceSentences,
+                                InputAndReferenceIds,
+                                dict.GetId2CharacterSequenceVector());
 //   std::cout << "Calculating LexiconCorrNFoundNRef" << std::endl;
   CalcLexiconCorrNFoundNRef();
 }
 
-void WERCalculator::TrimInputSentences(const vector< vector< int > > &InputSentences_, int WHPYLMContextLength)
+void WERCalculator::TrimInputSentences(
+  const vector< vector< int > > &InputSentences_,
+  int WHPYLMContextLength
+)
 {
   int NumInputSentences = InputSentences_.size();
   InputSentences.resize(NumInputSentences);
-  for (int IdxInputSentence = 0; IdxInputSentence < NumInputSentences; ++IdxInputSentence) {
-    InputSentences.at(IdxInputSentence).assign(InputSentences_.at(IdxInputSentence).begin() + WHPYLMContextLength, InputSentences_.at(IdxInputSentence).end() - 1);
+  for (int IdxInputSentence = 0;
+       IdxInputSentence < NumInputSentences;
+       ++IdxInputSentence) {
+    InputSentences.at(IdxInputSentence).assign(
+      InputSentences_.at(IdxInputSentence).begin() + WHPYLMContextLength,
+      InputSentences_.at(IdxInputSentence).end() - 1
+    );
   }
 }
 
-void WERCalculator::ParseReferenceFsts(const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts)
+void WERCalculator::ParseReferenceFsts(
+  const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts
+)
 {
   int NumReferenceFsts = ReferenceFsts.size();
   ReferenceSentences.resize(NumReferenceFsts);
-  for (int IdxReferenceFst = 0; IdxReferenceFst < NumReferenceFsts; ++IdxReferenceFst) {
+  for (int IdxReferenceFst = 0;
+       IdxReferenceFst < NumReferenceFsts;
+       ++IdxReferenceFst) {
 //     std::cout << "Parsing reference FST " << IdxReferenceFst << std::flush;
-    SampleLib::ParseSampleAndAddCharacterIdSequenceToDictionary(ReferenceFsts.at(IdxReferenceFst), &dict, &ReferenceSentences.at(IdxReferenceFst));
+    ParseLib::ParseSampleAndAddCharacterIdSequenceToDictionary(
+      ReferenceFsts.at(IdxReferenceFst),
+      &dict,
+      &ReferenceSentences.at(IdxReferenceFst),
+      nullptr,
+      std::vector<ArcInfo>()
+    );
 //     std::cout << " Done!" << std::endl << std::flush;
     ReferenceSentences.at(IdxReferenceFst).pop_back();
     TotalNumReferenceWords += ReferenceSentences.at(IdxReferenceFst).size();
   }
   InputAndReferenceIds.resize(dict.GetMaxNumWords() - dict.GetWordsBegin());
-  std::iota(InputAndReferenceIds.begin(), InputAndReferenceIds.end(), dict.GetWordsBegin());
+  std::iota(InputAndReferenceIds.begin(),
+            InputAndReferenceIds.end(),
+            dict.GetWordsBegin());
 }
 
 void WERCalculator::CalcLexiconCorrNFoundNRef()
@@ -91,13 +124,21 @@ void WERCalculator::CalcLexiconCorrNFoundNRef()
   std::vector<int> ConcatenatedReferenceSentences;
   ConcatenatedReferenceSentences.reserve(TotalNumReferenceWords);
   for (const std::vector<int> &ReferenceSentence : ReferenceSentences) {
-    ConcatenatedReferenceSentences.insert(ConcatenatedReferenceSentences.end(), ReferenceSentence.begin(), ReferenceSentence.end());
+    ConcatenatedReferenceSentences.insert(ConcatenatedReferenceSentences.end(),
+                                          ReferenceSentence.begin(),
+                                          ReferenceSentence.end());
   }
 
-  std::sort(ConcatenatedReferenceSentences.begin(), ConcatenatedReferenceSentences.end());
-  std::vector<int>::iterator LastUniqueElement = std::unique(ConcatenatedReferenceSentences.begin(), ConcatenatedReferenceSentences.end());
-  LexiconCorrNFoundNRef[2] = std::distance(ConcatenatedReferenceSentences.begin(), LastUniqueElement);
-  LexiconCorrNFoundNRef[0] = LexiconCorrNFoundNRef[1] - (dict.GetId2Word().size() - 1 - LexiconCorrNFoundNRef[2]);
+  std::sort(ConcatenatedReferenceSentences.begin(),
+            ConcatenatedReferenceSentences.end());
+  std::vector<int>::iterator LastUniqueElement =
+    std::unique(ConcatenatedReferenceSentences.begin(),
+                ConcatenatedReferenceSentences.end());
+  LexiconCorrNFoundNRef[2] =
+    std::distance(ConcatenatedReferenceSentences.begin(),
+                  LastUniqueElement);
+  LexiconCorrNFoundNRef[0] = LexiconCorrNFoundNRef[1] -
+                             (dict.GetId2Word().size() - 1 - LexiconCorrNFoundNRef[2]);
 }
 
 

@@ -47,3 +47,8 @@ add_library(EditDistanceCalculator
   PERCalculator.cpp
   LPERCalculator.cpp
 )
+
+target_link_libraries(EditDistanceCalculator
+  fst
+  dl
+)

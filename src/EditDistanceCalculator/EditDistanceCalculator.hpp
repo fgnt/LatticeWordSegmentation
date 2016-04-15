@@ -62,6 +62,7 @@
 
 #include <fst/vector-fst.h>
 
+/* class to calculate edit distance */
 class EditDistanceCalculator {
   unsigned int NumSentences;
   unsigned int NumThreads;
@@ -85,18 +86,70 @@ class EditDistanceCalculator {
   std::string Prefix;
   bool OutputEditOperations;
 
+
+  /* internal functions */
   void BuildLeftAndRightFactors();
+
   void CalculateEditDistance();
-  static inline void CalculateEditDistanceIdxRange(const vector< fst::VectorFst< fst::StdArc > > *InputFsts, const vector< fst::VectorFst< fst::StdArc > > *ReferenceFsts, vector< fst::VectorFst< fst::StdArc > > *ResultFsts, const fst::VectorFst< fst::StdArc > *LeftFactor, const fst::VectorFst< fst::StdArc > *RightFactor, vector< int > *InsDelSubCorrNFoundNRef, unsigned int StartIdx, unsigned int EndIdx, const vector< string > *Id2CharacterSequenceVector, const vector< string > *Filenames, const string *Prefix, bool OutputEditOperations);
-  static inline void BuildFstFromIdSequence(const vector< int > &IdSequence, fst::VectorFst< fst::StdArc > *Fst);
-  static inline void CalculateEditDistanceSingleIdx(const fst::VectorFst< fst::StdArc > &InputFst, const fst::VectorFst< fst::StdArc > &ReferenceFst, fst::VectorFst< fst::StdArc > *ResultFst, const fst::VectorFst< fst::StdArc > &LeftFactor, const fst::VectorFst< fst::StdArc > &RightFactor, vector< int > *InsDelSubCorrNFoundNRef, const vector< string > *Id2CharacterSequenceVector, const string *FileName, const string *Prefix, bool OutputEditOperations);
+
+  static inline void CalculateEditDistanceIdxRange(
+    const vector< fst::VectorFst< fst::StdArc > > *InputFsts,
+    const vector< fst::VectorFst< fst::StdArc > > *ReferenceFsts,
+    vector< fst::VectorFst< fst::StdArc > > *ResultFsts,
+    const fst::VectorFst< fst::StdArc > *LeftFactor,
+    const fst::VectorFst< fst::StdArc > *RightFactor,
+    vector< int > *InsDelSubCorrNFoundNRef,
+    unsigned int StartIdx,
+    unsigned int EndIdx,
+    const vector< string > *Id2CharacterSequenceVector,
+    const vector< string > *Filenames,
+    const string *Prefix,
+    bool OutputEditOperations
+  );
+  
+  static inline void BuildFstFromIdSequence(
+    const vector< int > &IdSequence,
+    fst::VectorFst< fst::StdArc > *Fst
+  );
+  
+  static inline void CalculateEditDistanceSingleIdx(
+    const fst::VectorFst< fst::StdArc > &InputFst,
+    const fst::VectorFst< fst::StdArc > &ReferenceFst,
+    fst::VectorFst< fst::StdArc > *ResultFst,
+    const fst::VectorFst< fst::StdArc > &LeftFactor,
+    const fst::VectorFst< fst::StdArc > &RightFactor,
+    vector< int > *InsDelSubCorrNFoundNRef,
+    const vector< string > *Id2CharacterSequenceVector,
+    const string *FileName,
+    const string *Prefix,
+    bool OutputEditOperations);
 
 protected:
-  void SetInputAndReferenceSentences(const vector< vector< int > > &InputSentences_, const vector< vector< int > > &ReferenceSentences_, const std::vector<int> &InputAndOutputIds_, const std::vector<std::string> &Id2CharacterSequenceVector_);
-  void SetInputFstsAndReferenceSentences(const vector< fst::VectorFst< fst::StdArc > > &InputFsts_, const vector< vector< int > > &ReferenceSentence, const vector< int > &InputAndOutputIds_, const vector< string > &Id2CharacterSequenceVector_);
+  /* interface for derived classes */
+  void SetInputAndReferenceSentences(
+    const vector< vector< int > > &InputSentences_,
+    const vector< vector< int > > &ReferenceSentences_,
+    const std::vector<int> &InputAndOutputIds_,
+    const std::vector<std::string> &Id2CharacterSequenceVector_
+  );
+  
+  void SetInputFstsAndReferenceSentences(
+    const vector< fst::VectorFst< fst::StdArc > > &InputFsts_,
+    const vector< vector< int > > &ReferenceSentence,
+    const vector< int > &InputAndOutputIds_,
+    const vector< string > &Id2CharacterSequenceVector_
+  );
 
 public:
-  EditDistanceCalculator(unsigned int NumThreads_, const vector< string > &FileNames_, const string &Prefix_, bool OutputEditOperations_);
+  /* constructor */
+  EditDistanceCalculator(
+    unsigned int NumThreads_,
+    const vector< string > &FileNames_,
+    const string &Prefix_,
+    bool OutputEditOperations_
+  );
+  
+  /* interface */
   const std::vector<int> &GetInsDelSubCorrNFoundNRef() const;
 };
 

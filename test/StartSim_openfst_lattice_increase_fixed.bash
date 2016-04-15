@@ -56,6 +56,10 @@ AmScale="-AmScale ${5}"                                                         
 ### Reading from openfst lattices (mostly for simulations) ###
 LatticeFileType='-LatticeFileType openfst'                                                # Format of lattice files (-LatticeFileType [cmu|htk|openfst] (text))
 SymbolFile="-SymbolFile ${Path}/openfst/symbols.txt"                                      # The symbolfile if reading from openfst lattices (-SymbolFile SymbolfileName (NULL))
+if [ -f ${Path}/openfst/input_arcs.txt ]
+then
+  InputArcInfosFile="-InputArcInfosFile ${Path}/openfst/input_arcs.txt"                   # arc infos file if reading from openfst lattices where input id points to label, start, end infos (Parameter: -InputArcInfosFile InputArcInfosFile ())
+fi
 
 ./LatticeWordSegmentation ${KnownN} \
                           ${UnkN} \
@@ -64,6 +68,7 @@ SymbolFile="-SymbolFile ${Path}/openfst/symbols.txt"                            
                           ${InputFilesList} \
                           ${InputType} \
                           ${SymbolFile} \
+                          ${InputArcInfosFile} \
                           ${Debug} \
                           ${LatticeFileType} \
                           ${ExportLattices} \

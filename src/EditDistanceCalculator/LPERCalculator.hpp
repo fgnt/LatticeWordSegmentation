@@ -61,17 +61,39 @@
 #define _LPERCALCULATOR_HPP_
 
 #include "EditDistanceCalculator.hpp"
+#include "definitions.hpp"
 
+/* class to calculate lattice phoneme error rate */
 class LPERCalculator : public EditDistanceCalculator {
   std::vector<fst::VectorFst<fst::StdArc> > InputFsts;
   std::vector<std::vector<int> > ReferenceSentences;
   std::vector<int> InputAndReferenceIds;
 
-  void ParseFsts(const vector< fst::VectorFst< fst::LogArc > > &Fsts, std::vector< std::vector< int > > *Sentences);
-  void RemoveWeightAndConvertToStdArc(const vector< fst::VectorFst< fst::LogArc > > &LogFsts, vector< fst::VectorFst< fst::StdArc > > *StdFsts);
+
+  /* internal functions */
+  void ParseFsts(
+    const vector< fst::VectorFst< fst::LogArc > > &Fsts,
+    std::vector< std::vector< int > > *Sentences
+  );
+
+  void RemoveWeightAndConvertToStdArc(
+    const vector< fst::VectorFst< fst::LogArc > > &LogFsts,
+    vector< fst::VectorFst< fst::StdArc > > *StdFsts,
+    const std::vector<ArcInfo> &InputArcInfos
+  );
 
 public:
-  LPERCalculator(const vector< fst::VectorFst< fst::LogArc > > &InputFsts_, const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts, const vector< string > &Id2CharacterSequenceVector, unsigned int NumThreads_, const vector< string > &FileNames_, const string &Prefix_, bool OutputEditOperations_);
+  /* constructor */
+  LPERCalculator(
+    const vector< fst::VectorFst< fst::LogArc > > &InputFsts_,
+    const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts,
+    const vector< string > &Id2CharacterSequenceVector,
+    unsigned int NumThreads_,
+    const vector< string > &FileNames_,
+    const string &Prefix_,
+    bool OutputEditOperations_,
+    const std::vector<ArcInfo> &InputArcInfos_
+  );
 };
 
 #endif

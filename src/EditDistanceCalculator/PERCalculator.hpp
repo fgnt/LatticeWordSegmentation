@@ -61,16 +61,34 @@
 #define _PERCALCULATOR_HPP_
 
 #include "EditDistanceCalculator.hpp"
+#include "definitions.hpp"
 
+/* class to calculate phoneme error rate */
 class PERCalculator : public EditDistanceCalculator {
   std::vector<std::vector<int> > InputSentences;
   std::vector<std::vector<int> > ReferenceSentences;
   std::vector<int> InputAndReferenceIds;
 
-  void ParseFsts(const vector< fst::VectorFst< fst::LogArc > > &Fsts_, std::vector< std::vector< int > > *Sentences);
+
+  /* internal functions */
+  void ParseFsts(
+    const vector< fst::VectorFst< fst::LogArc > > &Fsts_,
+    std::vector< std::vector< int > > *Sentences,
+    const std::vector<ArcInfo> &InputArcInfos_
+  );
 
 public:
-  PERCalculator(const vector< fst::VectorFst< fst::LogArc > > &InputFsts, const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts, const vector< string > &Id2CharacterSequenceVector, unsigned int NumThreads_, const vector< string > &FileNames_, const string &Prefix_, bool OutputEditOperations_);
+  /* constructor */
+  PERCalculator(
+    const vector< fst::VectorFst< fst::LogArc > > &InputFsts,
+    const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts,
+    const vector< string > &Id2CharacterSequenceVector,
+    unsigned int NumThreads_,
+    const vector< string > &FileNames_,
+    const string &Prefix_,
+    bool OutputEditOperations_,
+    const std::vector<ArcInfo> &InputArcInfos_
+  );
 };
 
 #endif

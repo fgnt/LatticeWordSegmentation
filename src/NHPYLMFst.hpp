@@ -83,28 +83,79 @@ class NHPYLMFst : public fst::Fst<fst::LogArc> {
   const int FallbackSymbolId;     // the fallback symbol id used for input symbols (either EPS or PHI)
 
   mutable std::vector<std::vector<fst::LogArc> > Arcs; // vector containing arcs of all states
-  mutable OLookAhead::Reachable *RD;
 
   /* internal functions */
-  const fst::LogArc *GetArcs(StateId s) const;                               // get transitions from language model and build arcs
-  static inline bool iLabelSort(const fst::LogArc &i, const fst::LogArc &j); // used to sort the arcs according to the imput label
+  // get transitions from language model and build arcs
+  const fst::LogArc *GetArcs(
+    StateId s
+  ) const;
+
+  // used to sort the arcs according to the imput label
+  static inline bool iLabelSort(
+    const fst::LogArc &i,
+    const fst::LogArc &j
+  );
 public:
   /* constructor and destructor */
-  NHPYLMFst(const NHPYLM &LanguageModel_, int SentEndWordId_, const std::vector<bool> &ActiveWords_, OLookAhead::Reachable *RD_ = 0); // setup the fst for the nested hierarchical pitman yor language model
+  // setup the fst for the nested hierarchical pitman yor language model
+  NHPYLMFst(
+    const NHPYLM &LanguageModel_,
+    int SentEndWordId_,
+    const std::vector<bool> &ActiveWords_
+  );
+
 
   /* interface */
-  StateId Start() const;                                                          // Initial state
-  Weight Final(StateId s) const;                                                  // State's final weight
-  size_t NumArcs(StateId s) const;                                                // State's arc count
-  size_t NumInputEpsilons(NHPYLMFst::StateId s) const;                                         // State's input epsilon count
-  size_t NumOutputEpsilons(StateId s) const;                                      // State's output epsilon count
-  uint64 Properties(uint64 mask, bool) const;                                     // Property bits
-  const string &Type() const;                                                     // Fst type name
-  Fst<fst::LogArc> *Copy(bool = false) const;                                     // Get a copy of this Fst
-  const fst::SymbolTable *InputSymbols() const;                                   // Return input label symbol table; return NULL if not specified
-  const fst::SymbolTable *OutputSymbols() const;                                  // Return output label symbol table; return NULL if not specified
-  void InitStateIterator(fst::StateIteratorData<fst::LogArc> *data) const;        // For generic state iterator construction;
-  void InitArcIterator(StateId s, fst::ArcIteratorData<fst::LogArc> *data) const; // For generic arc iterator construction;
+  // Initial state
+  StateId Start() const;
+
+  // State's final weight
+  Weight Final(
+    StateId s
+  ) const;
+  
+  // State's arc count
+  size_t NumArcs(
+    StateId s
+  ) const;
+  
+  // State's input epsilon count
+  size_t NumInputEpsilons(
+    NHPYLMFst::StateId s
+  ) const;
+  
+  // State's output epsilon count
+  size_t NumOutputEpsilons(
+    StateId s
+  ) const;
+  
+  // Property bits
+  uint64 Properties(
+    uint64 mask, bool
+  ) const;
+  // Fst type name
+  const string &Type() const;
+
+  // Get a copy of this Fst
+  Fst<fst::LogArc> *Copy(
+    bool = false
+  ) const;
+  
+  // Return input label symbol table; return NULL if not specified
+  const fst::SymbolTable *InputSymbols() const;
+
+  // Return output label symbol table; return NULL if not specified
+  const fst::SymbolTable *OutputSymbols() const;
+
+  // For generic state iterator construction
+  void InitStateIterator(
+    fst::StateIteratorData<fst::LogArc> *data
+  ) const;
+  
+  // For generic arc iterator construction
+  void InitArcIterator(
+    StateId s, fst::ArcIteratorData<fst::LogArc> *data
+  ) const;
 };
 
 #endif

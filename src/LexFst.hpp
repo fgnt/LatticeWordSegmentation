@@ -75,22 +75,67 @@ class LexFst : public fst::VectorFst<fst::LogArc> {
   StateId UnkState;                       // state for unknown sequences
   std::vector<double> CharacterSequenceProbabilityScale; // weights for character sequence probability scaling
 
+
   /* internal functions */
-  void addArcSorted(StateId s, const fst::LogArc &arc);                      // function to add an arc in sorted order
-  static inline bool iLabelSort(const fst::LogArc &i, const fst::LogArc &j); // comparison function for arc sorting
-  int getLastHistState(StateId s) const;                                     // returns last state of history sequence
-  void rmArcWithId(StateId s, CharId id);                                    // finds and removes an arc with given id from given state
+  // function to add an arc in sorted order
+  void addArcSorted(
+    StateId s,
+    const fst::LogArc &arc
+  );
+
+  // comparison function for arc sorting
+  static inline bool iLabelSort(
+    const fst::LogArc &i,
+    const fst::LogArc &j
+  );
+
+  // returns last state of history sequence
+  int getLastHistState(
+    StateId s
+  ) const;
+
+  // finds and removes an arc with given id from given state
+  void rmArcWithId(
+    StateId s,
+    CharId id
+  );
 
 public:
   /* constructor */
-  LexFst(bool pDebug, const vector< string > &pSymbols, int pCharactersBegin, const std::vector<double> &CharacterSequenceProbabilityScale); // construct lexicon fst
+  LexFst(
+    bool pDebug,
+    const vector< string > &pSymbols,
+    int pCharactersBegin,
+    const std::vector<double> &CharacterSequenceProbabilityScale
+  );
 
+  
   /* interface */
-  void BuildLexiconTansducer(const Word2IdHashmap &Word2Id);                            // build lexicon transducer from Word2Id map
-  void initializeArcs();                                                                // initialize arcs
-  void addWord(std::vector<int>::const_iterator WordBegin, int WordLength, int WordId); // add word to lexicon fst
-  void rmWord(std::vector<int>::const_iterator WordBegin, int WordLength);              // remove word from lexicon fst
-  uint64 Properties(uint64 mask, bool) const;                                           // Property bits
+  // build lexicon transducer from Word2Id map
+  void BuildLexiconTansducer(
+    const Word2IdHashmap &Word2Id
+  );
+  
+  // initialize arcs
+  void initializeArcs();
+  
+  // add word to lexicon fst
+  void addWord(
+    std::vector<int>::const_iterator WordBegin,
+    int WordLength,
+    int WordId);
+  
+  // remove word from lexicon fst
+  void rmWord(
+    std::vector<int>::const_iterator WordBegin,
+    int WordLength
+  );
+  
+  // Property bits
+  uint64 Properties(
+    uint64 mask,
+    bool
+  ) const;
 };
 
 #endif

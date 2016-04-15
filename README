@@ -5,6 +5,7 @@
 Software to apply unsupervised word segmentation on lattices or text sequences
 using a nested hierarchical Pitman Yor language model
 
+
 ###########
 # Contact #
 ###########
@@ -45,6 +46,7 @@ Set cmake build path to $GITROOT/build/ (next to src/ and test/ directories)
 Install openFST from http://www.openfst.org/twiki/bin/view/FST/FstDownload
 Required boost packages: boost_system, boost_filesystem
 
+Note: For more performace use release (-O3 -DNDEBUG) build!
 
 #########################
 # Automatic instalation #

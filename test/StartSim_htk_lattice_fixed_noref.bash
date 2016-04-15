@@ -61,6 +61,7 @@ AmScale="-AmScale ${5}"                                                         
 LatticeFileType='-LatticeFileType htk'                                                    # Format of lattice files (-LatticeFileType [cmu|htk|openfst] (text))
 # ExportLattices="-ExportLattices ${Path}/lattice_export/"                                # Export the input lattices to openfst format (-ExportLattices)
 HTKLMScale='-HTKLMScale 0'
+#ReadNodeTimes='-ReadNodeTimes'
 
 ./LatticeWordSegmentation ${KnownN} \
                           ${UnkN} \
@@ -90,4 +91,5 @@ HTKLMScale='-HTKLMScale 0'
                           ${WordLengthModulation} \
                           ${UseViterby} \
                           ${DeactivateCharacterModel} \
-                          ${HTKLMScale}
+                          ${HTKLMScale} \
+                          ${ReadNodeTimes}

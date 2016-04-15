@@ -164,3 +164,155 @@ void DebugLib::PrintVectorOfDoubles(const std::vector< double > &VectorOfDoubles
     std::cout << std::right << std::setw(Width) << Value << Postfix;
   }
 }
+
+void DebugLib::WriteOpenFSTLattice(const fst::VectorFst< fst::LogArc > &fst, const string &FileName)
+{
+  CreateDirectoryRecursively(FileName);
+  fst.Write(FileName.c_str());
+}
+
+void DebugLib::WriteSymbols(const string &fileName, const vector< string > &words, SymbolWriteModes SymbolWriteMode)
+{
+  std::cout << "  Writing symbols to " << fileName << std::endl;
+  std::ofstream symOut(fileName.c_str());
+  for (unsigned i = 0; i < words.size(); i++) {
+    if (SymbolWriteMode == NAMESANDIDS) {
+      symOut << words.at(i) << "[" << i << "]\t" << i << endl;
+    } else {
+      symOut << words.at(i) << "\t" << i << endl;
+    }
+  }
+  symOut.close();
+}
+
+void DebugLib::CreateDirectoryRecursively(const std::string &DirectoryName, size_t PathSeperatorPosition)
+{
+  PathSeperatorPosition = DirectoryName.find_last_of('/', PathSeperatorPosition);
+  if ((PathSeperatorPosition != string::npos) && (access(DirectoryName.substr(0, PathSeperatorPosition).c_str(), 0) != 0)) {
+    CreateDirectoryRecursively(DirectoryName, PathSeperatorPosition - 1);
+    mkdir(DirectoryName.substr(0, PathSeperatorPosition).c_str(), 0755);
+  }
+}
+
+void DebugLib::PrintFST(const string &pFileName, const vector< string > &words, const fst::VectorFst< fst::LogArc > &fst, bool printPDF, SymbolWriteModes SymbolWriteMode)
+{
+  WriteOpenFSTLattice(fst, pFileName);
+
+  string fileNameSymI = pFileName + "_sym_i.txt";
+  string fileNameSymO = pFileName + "_sym_o.txt";
+  if (SymbolWriteMode != NONE) {
+    WriteSymbols(pFileName + "_sym_i.txt", words, SymbolWriteMode);
+    WriteSymbols(pFileName + "_sym_o.txt", words, SymbolWriteMode);
+  }
+
+  string fileNameBat = pFileName + "_draw.sh";
+  FILE *batOut = std::fopen(fileNameBat.c_str(), "w");
+  if (!batOut) {
+    exit(10);
+  }
+
+  std::fprintf(batOut, "#!/bin/bash\n");
+  if (SymbolWriteMode != NONE) {
+    std::fprintf(batOut, "fstdraw --portrait=true --title=\"%s\" --isymbols=%s --osymbols=%s %s %s.dot\n", pFileName.c_str(), fileNameSymI.c_str(), fileNameSymO.c_str(), pFileName.c_str(), pFileName.c_str());
+  } else {
+    std::fprintf(batOut, "fstdraw --portrait=true --title=\"%s\" %s %s.dot\n", pFileName.c_str(), pFileName.c_str(), pFileName.c_str());
+  }
+  std::fprintf(batOut, "dot -Gcharset=latin1 -Gdpi=1200 -Tpdf %s.dot >%s.pdf", pFileName.c_str(), pFileName.c_str());
+  std::fclose(batOut);
+  chmod(fileNameBat.c_str(), 0744);
+
+  std::printf("Printing %s: ", pFileName.c_str());
+  if (printPDF) {
+    int ret1 = system(("./" + fileNameBat).c_str());
+    int ret2 = system(("rm " + fileNameBat).c_str());
+    int ret3 = system(("rm " + fileNameSymI).c_str());
+    int ret4 = system(("rm " + fileNameSymO).c_str());
+    int ret5 = system(("rm " + pFileName).c_str());
+    int ret6 = system(("rm " + pFileName + ".dot").c_str());
+    std::printf("%i %i %i %i %i %i\n", ret1, ret2, ret3, ret4, ret5, ret6);
+  }
+}
+
+void DebugLib::PrintSentencesToFile(const std::string &FileName, const std::vector<std::vector<int> > &Sentences, const std::vector<std::string> &Id2CharacterSequence)
+{
+  CreateDirectoryRecursively(FileName);
+
+  std::ofstream myfile;
+  myfile.open(FileName);
+  for (const auto &Sentence : Sentences) {
+//     DebugLib::PrintSentence(sit->begin(), sit->size(), Id2CharacterSequence);
+    for (const auto &WordId : Sentence) {
+      myfile << Id2CharacterSequence.at(WordId) << " ";
+    }
+    myfile << std::endl;
+  }
+  myfile.close();
+}
+
+void DebugLib::PrintTimedSentencesToFile(
+  const std::string &FileName,
+  const std::vector<std::vector<ArcInfo> > &TimedSentences,
+  const std::vector<std::string> &Id2CharacterSequence,
+  const std::vector<std::string> &InputFileNames)
+{
+  CreateDirectoryRecursively(FileName);
+
+  std::ofstream myfile;
+  myfile.open(FileName);
+  auto InputFilenName = InputFileNames.begin();
+  for (const auto &TimedSentence : TimedSentences) {
+    for (const auto &WordId : TimedSentence) {
+      myfile << *InputFilenName << " "
+             << Id2CharacterSequence.at(WordId.label) << " "
+             << WordId.start << " "
+             << WordId.end << std::endl;
+    }
+    InputFilenName++;
+  }
+  myfile.close();
+}
+
+void DebugLib::GenerateSentencesOfWordsFromCharLM(
+  const NHPYLM &LanguageModel)
+{
+  // Id2 Character sequence vector for printing
+  std::vector<std::string> Id2CharacterSequenceVector(
+    LanguageModel.GetId2CharacterSequenceVector());
+
+  // generate sentences of words from the Character language model
+  std::vector<std::vector<int> > GeneratedSentencesFromCHPYLM = LanguageModel.Generate("CHPYLM", 100000, -1, NULL);
+  for (auto &Sentence : GeneratedSentencesFromCHPYLM) {
+    for (auto &Character : Sentence) {
+      if (Character == UNKEND_SYMBOLID) {
+        std::cout << " ";
+      } else if (Character == SENTEND_SYMBOLID) {
+        std::cout << std::endl;
+      } else {
+//         std::cout << Id2CharacterSequenceVector.at(Character) << "[" << Character << "] ";
+        std::cout << Id2CharacterSequenceVector.at(Character);
+      }
+    }
+    std::cout << std::endl;
+  }
+}
+
+void DebugLib::GenerateSentencesOfWordsFromWordLM(
+  const NHPYLM &LanguageModel, int SentEndWordId)
+{
+  // Id2 word sequence vector for printing
+  std::vector<std::string> Id2WordSequenceVector(LanguageModel.GetId2CharacterSequenceVector());
+
+  // generate sentences of words from the word language model
+  std::vector<std::vector<int> > GeneratedSentencesFromWHPYLM = LanguageModel.Generate("WHPYLM", 10000, SentEndWordId, NULL);
+  for (auto &Sentence : GeneratedSentencesFromWHPYLM) {
+    for (auto &Word : Sentence) {
+      if (Word == SentEndWordId) {
+        std::cout << std::endl;
+      } else {
+//         std::cout << Id2CharacterSequenceVector.at(Word) << "[" << Word << "] ";
+        std::cout << Id2WordSequenceVector.at(Word) << " ";
+      }
+    }
+    std::cout << std::endl;
+  }
+}

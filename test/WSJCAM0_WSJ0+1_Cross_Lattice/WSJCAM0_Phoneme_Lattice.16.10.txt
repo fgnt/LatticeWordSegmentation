@@ -1,0 +1,10 @@
+WSJCAM0_WSJ0+1_Cross_Lattice/openfst/c02c0202.lat_16.000000
+WSJCAM0_WSJ0+1_Cross_Lattice/openfst/c02c0203.lat_16.000000
+WSJCAM0_WSJ0+1_Cross_Lattice/openfst/c02c0204.lat_16.000000
+WSJCAM0_WSJ0+1_Cross_Lattice/openfst/c02c0205.lat_16.000000
+WSJCAM0_WSJ0+1_Cross_Lattice/openfst/c02c0206.lat_16.000000
+WSJCAM0_WSJ0+1_Cross_Lattice/openfst/c02c0208.lat_16.000000
+WSJCAM0_WSJ0+1_Cross_Lattice/openfst/c02c0209.lat_16.000000
+WSJCAM0_WSJ0+1_Cross_Lattice/openfst/c02c020a.lat_16.000000
+WSJCAM0_WSJ0+1_Cross_Lattice/openfst/c02c020b.lat_16.000000
+WSJCAM0_WSJ0+1_Cross_Lattice/openfst/c02c020c.lat_16.000000
