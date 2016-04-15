@@ -5,6 +5,20 @@
 Software to apply unsupervised word segmentation on lattices or text sequences
 using a nested hierarchical Pitman Yor language model
 
+###########
+# Contact #
+###########
+
+In case of questions, suggestions, problems etc. please send an email or check the disussion group.
+
+Oliver Walter:
+walter@nt.uni-paderborn.de
+
+Discussion group:
+email: latticewordsegmentation@googlegroups.com
+google groups: https://groups.google.com/d/forum/latticewordsegmentation
+
+
 ##############
 # References #
 ##############
