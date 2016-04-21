@@ -88,6 +88,7 @@ struct ParameterStruct {
   unsigned int MaxLen;
   std::string PhoneAltFile;
   std::string DictFile;
+  bool UseDictFile;
   unsigned int SampleInput;
   unsigned int SampleThreads;
   bool Deletions;

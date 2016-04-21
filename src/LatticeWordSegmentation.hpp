@@ -81,10 +81,10 @@ class LatticeWordSegmentation {
   std::vector<std::thread> Threads;   // the thread objects
   LatticeWordSegmentationTimer Timer; // object to do some timing
 
-  /* language odel and dictionary */
+  /* language model and dictionary */
   NHPYLM *LanguageModel;           // the language model
   std::size_t SentEndWordId;       // the sentence end word id
-  std::size_t WHPYLMContextLength; // the context length for the whpylm
+  std::size_t WHPYLMContextLength; // the context length for the whpylm with given order
 
   /* sampling data */
   std::size_t NumSampledSentences;                          // number of sentences in input

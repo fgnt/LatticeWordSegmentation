@@ -350,19 +350,20 @@ ParseInitializationSentencesAndInitializeLanguageModel()
     std::cout << "\r  Sentence: " << IdxInitFst + 1
               << " of " << NumInitializationSentences;
 
+    auto& InitializationSentence = InitializationSentences.at(IdxInitFst);
+
     ParseLib::ParseSampleAndAddCharacterIdSequenceToDictionary(
       InitializationFst,
       LanguageModel,
-      &InitializationSentences.at(IdxInitFst)
+      &InitializationSentence
     );
 
-    InitializationSentences.at(IdxInitFst).insert(
-      InitializationSentences.at(IdxInitFst).begin(),
-      WHPYLMContextLength,
-      SentEndWordId
-    );
+    // insert enough sentence end words at the beginning to fill out the
+    // LM context size
+    InitializationSentence.insert(InitializationSentence.begin(),
+                        WHPYLMContextLength, SentEndWordId);
 
-    LanguageModel->AddWordSequenceToLm(InitializationSentences.at(IdxInitFst));
+    LanguageModel->AddWordSequenceToLm(InitializationSentence);
     IdxInitFst++;
   }
   std::cout << std::endl << std::endl;

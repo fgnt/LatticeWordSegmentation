@@ -42,9 +42,11 @@
 */
 // ----------------------------------------------------------------------------
 #include <thread>
+#include <cstring>
 #include "ParameterParser.hpp"
 
-ParameterParser::ParameterParser(int argc, const char **argv)
+ParameterParser::ParameterParser(int argc, const char **argv):
+  Parameters()
 {
   // version output
   std::cout << "-----------------------------------------------------------------------------------------------------------" << std::endl;
@@ -77,7 +79,8 @@ ParameterParser::ParameterParser(int argc, const char **argv)
       Parameters.NoThreads = atoi(argv[++argPos]);
       if (Parameters.NoThreads == 0) {
         Parameters.NoThreads = std::thread::hardware_concurrency();
-        std::cout << " Running with " << Parameters.NoThreads << " Threads" << std::endl << std::endl;
+        std::cout << " Running with " << Parameters.NoThreads
+                  << " Threads" << std::endl << std::endl;
       }
     } else if (!strcmp(argv[argPos], "-PruneFactor")) {
       Parameters.PruneFactor = atof(argv[++argPos]);
@@ -118,6 +121,7 @@ ParameterParser::ParameterParser(int argc, const char **argv)
       Parameters.PhoneAltFile = std::string(argv[++argPos]);
     } else if (!strcmp(argv[argPos], "-dict")) {
       Parameters.DictFile = std::string(argv[++argPos]);
+      Parameters.UseDictFile = true;
     } else if (!strcmp(argv[argPos], "-sampleInputs")) {
       Parameters.SampleInput = atoi(argv[++argPos]);
     } else if (!strcmp(argv[argPos], "-sampleThreads")) {
@@ -205,6 +209,11 @@ ParameterParser::ParameterParser(int argc, const char **argv)
       Parameters.PruningEnd = atof(argv[++argPos]);
     } else if (!strcmp(argv[argPos], "-ReadNodeTimes")) {
       Parameters.ReadNodeTimes = true;
+    } else if (!strcmp(argv[argPos], "-WordData")) {
+      Parameters.InitLM = true;
+      Parameters.UseDictFile = true;
+      Parameters.InitTranscription = std::string(argv[++argPos]);
+      Parameters.DictFile = std::string(argv[++argPos]);
     } else {
       std::ostringstream err;
       err << "Illegal option: " << argv[argPos];
@@ -286,12 +295,14 @@ void ParameterParser::DieOnHelp(const std::string& err) const
             << "  -DeactivateCharacterModel: Set iteration to deactivate character model." << std::endl
             << "                             0: off, >0 number of iteration (Parameter: -DeactivateCharacterModel NumIter)" << std::endl
             << "  -HTKLMScale:           Language model scaling factor when reading HTK lattices (Parameter: -HTKLMScale K (0))" << std::endl
-            << "  -ReadNodeTimes;        Read node timing informations from HTK lattice" << std::endl;
+            << "  -ReadNodeTimes;        Read node timing informations from HTK lattice" << std::endl
+            << "  -WordData:             Use init transciptions and a pronounciation dictionary for initialization."
+            << "This needs SentenceFile and PronDictFile as additional inputs." << std::endl;
 
   if(!err.empty()){
     std::cout << std::endl << " Error: " << err << std::endl;
   }
-  exit(1);
+  std::exit(1);
 }
 
 void ParameterParser::ReadFilesFromFileList(const std::string &InputFileList)
@@ -337,6 +348,12 @@ const ParameterStruct &ParameterParser::GetParameters() const
 
 
 ParameterStruct::ParameterStruct() :
+  NumBurnIn(0),
+  TrimRate(0),
+  NumSamples(0),
+  SampleRate(0),
+  SampleInputRate(0),
+  DecodeMethod(0),
   KnownN(1),
   UnkN(1),
   NoThreads(1),
@@ -345,17 +362,47 @@ ParameterStruct::ParameterStruct() :
   InputType(INPUT_TEXT),
   SymbolFile(),
   InputArcInfosFile(),
+  Prefix(),
+  Separator(),
+  ErrorRate(0),
   AmScale(1),
+  MaxErrorProb(0),
   Debug(0),
+  DrawFsts(false),
+  MaxLen(0),
+  PhoneAltFile(),
+  DictFile(),
+  UseDictFile(false),
+  SampleInput(0),
+  SampleThreads(0),
+  Deletions(false),
+  AltInit(false),
+  FullInit(false),
   LatticeFileType(TEXT),
+  DictConstraint(0),
+  ErrCorrection(false),
+  ErrStart(0),
+  RepProb(0),
+  InsCnt(0),
+  CacheLattice(false),
   ExportLattices(false),
+  AltLM(false),
   SwitchIter(0),
   NewKnownN(1),
   NewUnkN(1),
   NewLMNumIters(0),
+  NewAltLMN(0),
+  NewAmScale(0),
+  AltN(0),
   InitLM(false),
   InitTranscription(),
   InitLmNumIterations(0),
+  MLFFileName(),
+  UseMlf(false),
+  Save(false),
+  AddAll(false),
+  CopyLex(false),
+  Connect(false),
   InputFiles(),
   NumIter(0),
   ExportLatticesDirectoryName(),

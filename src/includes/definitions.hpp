@@ -80,14 +80,15 @@
 #define SENTEND_SYMBOLID   5
 #define CHARACTERSBEGIN    6
 
-typedef int CharId; // alias for character id
-typedef int WordId; // alias for word id
+static const std::string PHONE_PREFIX("");
 
 typedef fst::VectorFst<fst::StdArc> StdVectorFst;
 typedef fst::VectorFst<fst::LogArc> LogVectorFst;
 typedef fst::StateIterator<LogVectorFst>  LogStateIterator;
 
 typedef std::unordered_map<std::string, int> StringToIntMap;
+typedef std::unordered_map<std::string, std::vector<std::string>> PronDictType;
+typedef std::unordered_map<std::string, StringToIntMap> RevPronDictType;
 
 // phi matcher for composition with lexicon and language model transducer
 typedef fst::PhiMatcher<fst::SortedMatcher<fst::Fst<fst::LogArc> > > PM;
@@ -95,6 +96,10 @@ typedef fst::ArcMapFst<fst::LogArc, fst::StdArc,
                        fst::LogToStdMapper> LogToStdMapFst;
 
 typedef fst::ComposeFst<fst::LogArc> LogComposeFst;
+
+typedef int CharId; // alias for character id
+typedef int WordId; // alias for word id
+typedef LogVectorFst::StateId StateId;
 
 // struct to hold arc information
 struct ArcInfo {

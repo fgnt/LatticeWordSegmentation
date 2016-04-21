@@ -90,21 +90,24 @@ class FileReader {
   std::vector<LogVectorFst> ReferenceFsts;
   std::vector<std::string> ReferenceFileNames;
 
+  static const bool PARSE_REFERENCES = true;
 
+  PronDictType PronDict;
   /* internal functions: input */
   void ReadHTKLattices();
-  
+
   void ReadSegmentList(
     std::size_t InputFileId,
     std::string line, int debug_
   );
-  
+
   void ReadOpenFSTLattices();
 
   void ReadTextFiles(
     const std::vector<std::string > &InputFiles,
     std::vector<LogVectorFst> *InputFsts,
-    std::vector<std::string> *FileNames
+    std::vector<std::string> *FileNames,
+    bool ParseReferences=false
   );
 
   // read the symbols file mapping strings to integers
@@ -125,13 +128,13 @@ class FileReader {
   void PruneLattices(
     double PruningFactor
   );
-  
+
   void ApplyAcousticModelScalingFactor();
-  
+
   void ApplyWordEndTransducer();
-  
+
   void ApplySentEndTransducer();
-  
+
   void CalculateLatticePhonemeErrorRate();
 
   /* internal functions: output */
@@ -142,11 +145,19 @@ class FileReader {
   bool IsSilence(
     std::string phone
   );
-  
+
   std::string GetSubstrAfterSep(
     std::string inStr,
     char sep
   );
+
+  void ReadPronDict();
+
+  StateId AddPhoneToFst(
+    LogVectorFst& LatticeFst, StateId State,
+    const std::string& phone
+  );
+
 public:
   /* constructor */
   // set some predefined symbols in string to int map and read data

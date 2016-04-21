@@ -44,7 +44,8 @@
 #include "Dictionary.hpp"
 
 /** construct dictionary **/
-Dictionary::Dictionary(unsigned int CHPYLMContextLength_, const std::vector< std::string > &Symbols_) :
+Dictionary::Dictionary(unsigned int CHPYLMContextLength_,
+                       const std::vector< std::string > &Symbols_) :
   Word2Id(),
   MaxId(Symbols_.size()),
   WordsBegin(Symbols_.size()),
@@ -60,8 +61,9 @@ Dictionary::Dictionary(unsigned int CHPYLMContextLength_, const std::vector< std
   Id2Word.set_empty_key(EMPTY);
   Id2CharacterSequence.set_deleted_key(DELETED);
   Id2CharacterSequence.set_empty_key(EMPTY);
-  for (unsigned int SymbolIdx = 0; SymbolIdx < Symbols_.size(); ++SymbolIdx) {
-    Id2CharacterSequence.insert(make_pair(SymbolIdx, Symbols_.at(SymbolIdx)));
+  for (std::size_t SymbolIdx = 0; SymbolIdx < Symbols_.size(); ++SymbolIdx) {
+    const auto& Symbol = Symbols_.at(SymbolIdx);
+    Id2CharacterSequence.insert(std::make_pair(SymbolIdx, Symbol));
   }
 }
 
@@ -82,10 +84,11 @@ int Dictionary::GetWordId(const const_citerator &c, unsigned int length) const
 
 
 /** add word to dictionary given iterator to vector of ints and word length **/
-WordIdAddedPair Dictionary::AddCharacterIdSequenceToDictionary(const const_citerator &c, unsigned int length)
+WordIdAddedPair Dictionary::AddCharacterIdSequenceToDictionary(
+    const const_citerator &c, unsigned int length)
 {
   std::vector<int> WordVector(c, c + length);
-  Word2IdHashmap::const_iterator it = Word2Id.find(WordVector);
+  const auto it = Word2Id.find(WordVector);
   if (it == Word2Id.end()) {
     int WordId;
 
@@ -118,7 +121,8 @@ WordIdAddedPair Dictionary::AddCharacterIdSequenceToDictionary(const const_citer
 /** remove word from dictionary given word id **/
 void Dictionary::RemoveWordFromDictionary(int OldWordId)
 {
-  std::vector<int> WordVector(Id2Word[OldWordId].begin() + CHPYLMContextLength, Id2Word[OldWordId].end() - 1);
+  std::vector<int> WordVector(Id2Word[OldWordId].begin() + CHPYLMContextLength,
+                              Id2Word[OldWordId].end() - 1);
   Word2Id.erase(WordVector);
   Id2Word.erase(OldWordId);
   Id2CharacterSequence.erase(OldWordId);
@@ -149,7 +153,8 @@ const Word2IdHashmap &Dictionary::GetWord2Id() const
 WordBeginLengthPair Dictionary::GetWordBeginLength(int WordId) const
 {
   Id2WordHashmap::const_iterator it = Id2Word.find(WordId);
-  return std::make_pair(it->second.begin() + CHPYLMContextLength, it->second.size() - CHPYLMContextLength - 1);
+  return std::make_pair(it->second.begin() + CHPYLMContextLength,
+                        it->second.size() - CHPYLMContextLength - 1);
 }
 
 /** return legth for character id sequence of given word id **/
@@ -160,7 +165,8 @@ int Dictionary::GetWordLength(int WordId) const
 
 
 /** insert written form a a word into symbol map **/
-void Dictionary::AddWordToId2CharacterSequence(const_citerator c, unsigned int length, int WordId)
+void Dictionary::AddWordToId2CharacterSequence(const_citerator c,
+                                               unsigned int length, int WordId)
 {
   std::ostringstream oss;
   for (unsigned int i = 0; i < length; i++) {
@@ -173,8 +179,10 @@ void Dictionary::AddWordToId2CharacterSequence(const_citerator c, unsigned int l
 std::vector<std::string> Dictionary::GetId2CharacterSequenceVector() const
 {
   std::vector<std::string> Id2CharacterSequenceVector(MaxId);
-  for (Id2CharacterSequenceHashmap::const_iterator CharacterSequence = Id2CharacterSequence.begin(); CharacterSequence != Id2CharacterSequence.end(); ++CharacterSequence) {
-    Id2CharacterSequenceVector[CharacterSequence->first] = CharacterSequence->second;
+  for (auto CharSequence = Id2CharacterSequence.begin();
+       CharSequence != Id2CharacterSequence.end(); ++CharSequence)
+  {
+    Id2CharacterSequenceVector[CharSequence->first] = CharSequence->second;
   }
   return Id2CharacterSequenceVector;
 }
@@ -183,20 +191,27 @@ std::vector<std::string> Dictionary::GetId2CharacterSequenceVector() const
 std::vector<int> Dictionary::GetWordLengthVector() const
 {
   std::vector<int> WordLengthVector(MaxId);
-  for (Id2WordHashmap::const_iterator Word = Id2Word.begin(); Word != Id2Word.end(); ++Word) {
-    WordLengthVector[Word->first] = Word->second.size() - CHPYLMContextLength - 1;
+  for (const auto& Word: Id2Word) {
+    WordLengthVector[Word.first] = Word.second.size() - CHPYLMContextLength - 1;
   }
   return WordLengthVector;
 }
 
 
 /** return vector of vector of strings containing the characters sequence for each word **/
-std::vector< std::vector< std::string > > Dictionary::GetId2SeparatedCharacterSequenceVector() const
+std::vector<std::vector<std::string>>
+    Dictionary::GetId2SeparatedCharacterSequenceVector() const
 {
   std::vector<std::vector<std::string> > Id2SeparatedCharacterSequenceVector(MaxId);
-  for (Id2WordHashmap::const_iterator CharacterIdSequence = Id2Word.begin(); CharacterIdSequence != Id2Word.end(); ++CharacterIdSequence) {
-    for (const_citerator CharacterId = CharacterIdSequence->second.begin() + CHPYLMContextLength; CharacterId != CharacterIdSequence->second.end(); ++CharacterId) {
-      Id2SeparatedCharacterSequenceVector[CharacterIdSequence->first].push_back(Id2CharacterSequence.find(*CharacterId)->second);
+  for (const auto& CharacterIdSequence: Id2Word) {
+    for (const_citerator CharacterId =
+              CharacterIdSequence.second.begin() + CHPYLMContextLength;
+         CharacterId != CharacterIdSequence.second.end(); ++CharacterId)
+    {
+      auto currentCharacter(Id2CharacterSequence.find(*CharacterId)->second);
+      Id2SeparatedCharacterSequenceVector[CharacterIdSequence.first].push_back(
+            std::move(currentCharacter)
+      );
     }
   }
   return Id2SeparatedCharacterSequenceVector;
