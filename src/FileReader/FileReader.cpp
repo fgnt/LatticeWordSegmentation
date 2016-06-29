@@ -284,7 +284,7 @@ void FileReader::ReadHTKLattices()
     for (std::size_t s = 1; s < nodes; s++) {
       latticeFst.AddState();
     }
-    latticeFst.SetFinal(nodes - 1, 0);
+    // latticeFst.SetFinal(nodes - 1, 0);
 
     // read node times
     std::vector<float> NodeTimes;
@@ -319,6 +319,8 @@ void FileReader::ReadHTKLattices()
     }
 
     //read the path
+    std::vector<bool> IsFinal(nodes, true);
+
     while (std::getline(in, line)) {
       if (line.substr(0, 1) == "J") {       //only evaluate the links
         //Format example: J=5 S=0 E=5 W="zh"  v=0 a=-273.284  l=-3.80666
@@ -343,6 +345,7 @@ void FileReader::ReadHTKLattices()
         }
         pos = cur.find("=");
         start = std::stoi(cur.substr(pos + 1));
+        IsFinal.at(start) = false;
 
         //end
         int end;
@@ -431,6 +434,22 @@ void FileReader::ReadHTKLattices()
       } //end if
     } //end read line
 
+    // set final nodes
+    if (!IsFinal.at(nodes - 1)){
+      std::cout << "Warning: The last node is not a final node!"
+                << std::endl;
+    }
+
+    for(std::size_t NodeId = 0; NodeId < nodes; NodeId++) {
+      if (IsFinal.at(NodeId)) {
+        latticeFst.SetFinal(NodeId, 0);
+        if (NodeId != nodes - 1) {
+          std::cout << "Warning: Final node " << NodeId
+                    << " is not the last node!" << std::endl;
+        }
+      }
+    }
+
     // rmepsilon
     if (debug_ > 2) {
       std::cout << "RmEpsilon";
@@ -489,43 +508,43 @@ void FileReader::ReadHTKLattices()
 
 void FileReader::ReadSegmentList(std::size_t InputFileId,
                                  std::string line, int debug_){
-      std::size_t NumSegments;
-      std::vector<float> SegmentStart;
-      std::vector<float> SegmentEnd;
-      // read segments
-      std::size_t pos = Params.InputFiles.at(InputFileId).find_last_of(".");
-      std::string SegmentFile(Params.InputFiles.at(InputFileId).substr(0, pos) +
-                         "_Segments.txt");
-      std::cout << "Reading segments from " << SegmentFile << std::endl;
-      std::ifstream inSegFile(SegmentFile);
-      std::getline(inSegFile, line); // read number of segments
-      NumSegments = std::stoull(GetSubstrAfterSep(line, '='));
-      SegmentStart.resize(NumSegments, -1);
-      SegmentEnd.resize(NumSegments, -1);
-      for (std::size_t SegmentId = 0; SegmentId < NumSegments; SegmentId++) {
-        // find next segment enty
-        std::getline(inSegFile, line);
-        while (inSegFile.good() && line.substr(0, 1) != "J") {
-          std::getline(inSegFile, line);
-        }
-        std::istringstream iss(line);
-        std::string SegStr;
-        iss >> SegStr; // discard Segment number
-        iss >> SegStr; // read start time
-        SegmentStart[SegmentId] = std::stof(GetSubstrAfterSep(SegStr, '='));
-        iss >> SegStr; // read end time
-        SegmentEnd[SegmentId] = std::stof(SegStr.substr(SegStr.find("=") + 1));
-        iss >> SegStr; // read word
-        if (SegStr.substr(SegStr.find("=") + 1) == "[silence]") {
-          SegmentStart[SegmentId] = -1;
-          SegmentEnd[SegmentId] = -1;
-        }
-        if (debug_) {
-          std::cout << "Reading Segment " << SegmentId << " of "
-                    << NumSegments << " Start: " << SegmentStart[SegmentId]
-                    << " End: " << SegmentEnd[SegmentId] << std::endl;
-        }
-      }
+  std::size_t NumSegments;
+  std::vector<float> SegmentStart;
+  std::vector<float> SegmentEnd;
+  // read segments
+  std::size_t pos = Params.InputFiles.at(InputFileId).find_last_of(".");
+  std::string SegmentFile(Params.InputFiles.at(InputFileId).substr(0, pos) +
+                      "_Segments.txt");
+  std::cout << "Reading segments from " << SegmentFile << std::endl;
+  std::ifstream inSegFile(SegmentFile);
+  std::getline(inSegFile, line); // read number of segments
+  NumSegments = std::stoull(GetSubstrAfterSep(line, '='));
+  SegmentStart.resize(NumSegments, -1);
+  SegmentEnd.resize(NumSegments, -1);
+  for (std::size_t SegmentId = 0; SegmentId < NumSegments; SegmentId++) {
+    // find next segment enty
+    std::getline(inSegFile, line);
+    while (inSegFile.good() && line.substr(0, 1) != "J") {
+      std::getline(inSegFile, line);
+    }
+    std::istringstream iss(line);
+    std::string SegStr;
+    iss >> SegStr; // discard Segment number
+    iss >> SegStr; // read start time
+    SegmentStart[SegmentId] = std::stof(GetSubstrAfterSep(SegStr, '='));
+    iss >> SegStr; // read end time
+    SegmentEnd[SegmentId] = std::stof(SegStr.substr(SegStr.find("=") + 1));
+    iss >> SegStr; // read word
+    if (SegStr.substr(SegStr.find("=") + 1) == "[silence]") {
+      SegmentStart[SegmentId] = -1;
+      SegmentEnd[SegmentId] = -1;
+    }
+    if (debug_) {
+      std::cout << "Reading Segment " << SegmentId << " of "
+                << NumSegments << " Start: " << SegmentStart[SegmentId]
+                << " End: " << SegmentEnd[SegmentId] << std::endl;
+    }
+  }
 }
 void FileReader::ReadOpenFSTLattices()
 {

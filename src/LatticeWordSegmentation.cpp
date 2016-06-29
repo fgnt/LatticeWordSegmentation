@@ -201,10 +201,9 @@ void LatticeWordSegmentation::DoWordSegmentationSentenceIterations(
     bool UseViterby =
       (Params.UseViterby > 0) && ((IdxIter + 1) >= Params.UseViterby);
 
-    for (std::size_t IdxThread = 0; IdxThread < (NumThreads - 1); ++IdxThread) {
+    auto SampleFn = [&](std::size_t IdxSentence, std::size_t IdxThread){
       std::size_t CurrentIndex = ShuffledIndices[IdxSentence + IdxThread];
-      Threads[IdxThread] =
-        std::thread(SampleLib::ComposeAndSampleFromInputLexiconAndLM,
+      SampleLib::ComposeAndSampleFromInputLexiconAndLM(
                     &InputFileData.GetInputFsts().at(CurrentIndex),
                     LexiconTransducer,
                     LanguageModel,
@@ -212,21 +211,13 @@ void LatticeWordSegmentation::DoWordSegmentationSentenceIterations(
                     &SampledFsts[CurrentIndex],
                     &Timer.tInSamples[IdxThread],
                     Params.BeamWidth,
-                    UseViterby
-                   );
-    }
+                    UseViterby);
+    };
 
-    std::size_t CurrentIndex = ShuffledIndices[IdxSentence + (NumThreads - 1)];
-    SampleLib::ComposeAndSampleFromInputLexiconAndLM(
-      &InputFileData.GetInputFsts().at(CurrentIndex),
-      LexiconTransducer,
-      LanguageModel,
-      SentEndWordId,
-      &SampledFsts[CurrentIndex],
-      &Timer.tInSamples[(NumThreads - 1)],
-      Params.BeamWidth,
-      UseViterby
-    );
+    for (std::size_t IdxThread = 0; IdxThread < (NumThreads - 1); ++IdxThread) {
+      Threads[IdxThread] = std::thread(SampleFn, IdxSentence, IdxThread);
+    }
+    SampleFn(IdxSentence, NumThreads-1);
 
     // join threads
     for (std::size_t IdxThread = 0; IdxThread < (NumThreads - 1); ++IdxThread) {
@@ -298,15 +289,15 @@ void LatticeWordSegmentation::SwitchLanguageModelOrders(
 
   // retrain language model for some iterations
   TrainLanguageModel(SampledSentences, Params.NewLMNumIters);
-  
+
   // calculate and update word length statistics
   WordLengthProbCalculator::UpdateWHPYLMBaseProbabilitiesScale(
     LanguageModel,
     Params.WordLengthModulation);
-  
+
   // resample hyperparameters of language model
   LanguageModel->ResampleHyperParameters();
-  
+
   // cleanup: delete old language model
   delete OldLanguageModel;
 }
@@ -367,15 +358,15 @@ ParseInitializationSentencesAndInitializeLanguageModel()
     IdxInitFst++;
   }
   std::cout << std::endl << std::endl;
-  
+
   // calculate and update word length statistics
   WordLengthProbCalculator::UpdateWHPYLMBaseProbabilitiesScale(
     LanguageModel,
     Params.WordLengthModulation);
-  
+
   // resample hyperparameters of language model
   LanguageModel->ResampleHyperParameters();
-  
+
   // get perplexity
   DebugLib::PrintSentencesPerplexity(InitializationSentences, *LanguageModel);
 
@@ -411,12 +402,12 @@ void LatticeWordSegmentation::TrainLanguageModel(
       LanguageModel->AddWordSequenceToLm(Sentences.at(IdxInitFst));
     }
     std::cout << std::endl;
-    
+
     // calculate and update word length statistics
     WordLengthProbCalculator::UpdateWHPYLMBaseProbabilitiesScale(
       LanguageModel,
       Params.WordLengthModulation);
-    
+
     // resample hyperparameters of language model
     LanguageModel->ResampleHyperParameters();
 

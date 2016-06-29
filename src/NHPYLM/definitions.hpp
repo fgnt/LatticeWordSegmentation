@@ -99,5 +99,21 @@ typedef google::dense_hash_map<int, std::vector<int> > Id2WordHashmap;          
 typedef google::dense_hash_map<int, std::string> Id2CharacterSequenceHashmap;                           // int to vector of strings map
 typedef google::dense_hash_map<std::vector<int>, int, boost::hash< std::vector<int> > > Word2IdHashmap; // vector to int hashmap
 
+struct NHPYLMParameters {
+    const std::vector<double> &CHPYLMDiscount;      // discount parameters of hierarchical character pitman yor language model
+    const std::vector<double> &CHPYLMConcentration; // concentration parameter of hierarchical character pitman yor language model
+    const std::vector<double> &WHPYLMDiscount;      // discount parameters of hierarchical word pitman yor language model
+    const std::vector<double> &WHPYLMConcentration; // concentration parameters of hierarchical word pitman yor language model
+    NHPYLMParameters(const std::vector< double > &CHPYLMDiscount_, const std::vector< double > &CHPYLMConcentration_, const std::vector< double > &WHPYLMDiscount_, const std::vector< double > &WHPYLMConcentration_); // initialize parameters
+};
+
+/* transitions from one to the next context */
+struct ContextToContextTransitions {
+    std::vector<int> Words;            // word ids for transitions
+    std::vector<int> NextContextIds;   // next context id after transistion
+    std::vector<double> Probabilities; // probabilities of transitions
+    bool HasTransitionToSentEnd;       // indicator of transition to sentence end is present
+    ContextToContextTransitions();     // initialize transitions object
+};
 
 #endif

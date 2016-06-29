@@ -17,3 +17,4 @@ test/WSJCAM0_Lattice/openfst/*.lat_10.000000
 test/WSJCAM0_Lattice/openfst/symbols.txt
 test/WSJCAM0_WSJ0+1_Cross_Lattice/htk/*.lat
 test/WSJCAM0_WSJ0+1_Cross_Lattice/lattice_export/
+test/Xitsongs_WSJ0+1_Cross_Lattice/

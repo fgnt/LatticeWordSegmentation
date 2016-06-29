@@ -237,7 +237,7 @@ std::vector<int> Restaurant::GetWords(const std::vector<bool> &ActiveWords) cons
   std::vector<int> WordsInContext;
   WordsInContext.reserve(Words.size());
   for (WordsHashmap::const_iterator Word = Words.begin(); Word != Words.end(); ++Word) {
-    if (ActiveWords[Word->first]) {
+    if (ActiveWords.empty() || ActiveWords[Word->first]) {
       WordsInContext.push_back(Word->first);
     }
   }

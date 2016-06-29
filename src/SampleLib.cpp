@@ -229,7 +229,14 @@ void SampleLib::SampGen(const fst::Fst< fst::LogArc > &ifst,
 
   int Debug = 0;
 
-  // sanity check
+  // sanity checks
+  // 1. Is the input fst empty? (Checking on NumStates() == 0 does not work as
+  // it is a valid member only for Expanded FSTs
+  if(ifst.Start() == fst::kNoStateId) {
+     throw std::runtime_error("Input FST is empty!");
+  }
+
+  // 2. Is the input a cyclic FST? (This would break without the previous test).
   if (ifst.Final(ifst.Start()) != std::numeric_limits<float>::infinity()) {
     throw std::runtime_error("Sampling FSTs where start states are final is not supported yet");
   }

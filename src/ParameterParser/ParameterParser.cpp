@@ -257,6 +257,8 @@ void ParameterParser::DieOnHelp(const std::string& err) const
             << "                         For fst input, files must be in OpenFST binary format, Log semiring" << std::endl
             << "                         Text files consist of one sentence per line, each symbol seperated by a whitespace." << std::endl
             << "  -InputType:            The type of the input (-InputType [text|fst] (text))" << std::endl
+            << "                         text:    Textual input data with characters separated by spaces forming a sentence per line." << std::endl
+            << "                         fst:     FST input files in a supported lattice format. See parameter LatticeFileType." << std::endl
             << "  -SymbolFile:           The symbolfile if reading from openfst lattices (-SymbolFile SymbolfileName (NULL))" << std::endl
             << "  -InputArcInfosFile:    arc infos file if reading from openfst lattices where input id points to" << std::endl
             << "                         label, start, end infos (Parameter: -InputArcInfosFile InputArcInfosFile ())" << std::endl

@@ -71,7 +71,7 @@ class DebugLib {
 public:
   // print transitions output recursively
   static void PrintTransitions(
-    const HPYLM::ContextToContextTransitions &Transitions,
+    const ContextToContextTransitions &Transitions,
     unsigned int CurrentContextId,
     std::vector< bool > &VisitedContextIds,
     const NHPYLM &LanguageModel,

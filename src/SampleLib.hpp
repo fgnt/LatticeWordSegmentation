@@ -89,6 +89,7 @@
 
 /* library for generating and parsing samples from input lattice */
 class SampleLib {
+  
   static std::mutex mtx;
 
   // find all active words in the word fst

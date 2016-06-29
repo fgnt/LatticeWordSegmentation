@@ -47,6 +47,7 @@ cmake_policy(SET CMP0015 NEW)
 
 include_directories(includes)
 include_directories(SYSTEM ../tools/include)
+include_directories(SYSTEM NHPYLM/ext_deps/)
 link_directories(../tools/lib)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra")
 add_subdirectory(FileReader)

@@ -66,57 +66,157 @@
 
 /* nested hierarchical pitman yor language model */
 class NHPYLM: public Dictionary {
-  /* structure to hold the parameters of the hierarchical character and word pitman yor language model */
-  struct NHPYLMParameters {
-    const std::vector<double> &CHPYLMDiscount;      // discount parameters of hierarchical character pitman yor language model
-    const std::vector<double> &CHPYLMConcentration; // concentration parameter of hierarchical character pitman yor language model
-    const std::vector<double> &WHPYLMDiscount;      // discount parameters of hierarchical word pitman yor language model
-    const std::vector<double> &WHPYLMConcentration; // concentration parameters of hierarchical word pitman yor language model
-    NHPYLMParameters(const std::vector< double > &CHPYLMDiscount_, const std::vector< double > &CHPYLMConcentration_, const std::vector< double > &WHPYLMDiscount_, const std::vector< double > &WHPYLMConcentration_); // initialize parameters
-  };
+  // character hierarchical pitman yor language model
+  HPYLM CHPYLM;
+  // word hierarchical pitman yor language model
+  HPYLM WHPYLM;
+  // order of character hierarchical pitman yor language model
+  const unsigned int CHPYLMOrder;
+  // order of word hierarchical pitman yor language model
+  const unsigned int WHPYLMOrder;
+  // Begin of characters (first character id)
+  const int CharactersBegin;
+  // End of characters (1 + last character)
+  const int CharactersEnd;
+  // Number of characters
+  const unsigned int NumCharacters;
+  // parameters for character and word pitman yor language model
+  const NHPYLMParameters Parameters;
+  const double WordBaseProbability;
 
-  HPYLM CHPYLM;                      // character hierarchical pitman yor language model
-  HPYLM WHPYLM;                      // word hierarchical pitman yor language model
-  const unsigned int CHPYLMOrder;    // order of character hierarchical pitman yor language model
-  const unsigned int WHPYLMOrder;    // order of word hierarchical pitman yor language model
-  const int CharactersBegin;         // Begin of characters (first character id)
-  const int CharactersEnd;           // End of characters (1 + last character)
-  const unsigned int NumCharacters;  // Number of characters
-  const NHPYLMParameters Parameters; // parameters for character and word pitman yor language model
-
-  mutable google::dense_hash_map<int, double> CHPYLMBaseProbabilities; // base probabilities for characters
-  mutable google::dense_hash_map<int, double> WHPYLMBaseProbabilities; // base probabilities for words
-  mutable std::mutex mtx;                                              // mutex to allow multi threading
+  // base probabilities for characters
+  mutable google::dense_hash_map<int, double> CHPYLMBaseProbabilities;
+  // base probabilities for words
+  mutable google::dense_hash_map<int, double> WHPYLMBaseProbabilities;
+  // mutex to allow multi threading
+  mutable std::mutex mtx;
 
   /* some internal functions */
-  void AddCharacterSequenceToCHPYLM(const std::vector<int> &CharacterSequence);      // Add the character sequence of a word to the character language model
-  void RemoveCharacterSequenceFromCHPYLM(const std::vector<int> &CharacterSequence); // remove the character sequence of a word ftom the character language model
+  // Add the character sequence of a word to the character language model
+  void AddCharacterSequenceToCHPYLM(
+    const std::vector<int> &CharacterSequence
+  );
+  
+  // remove the character sequence of a word ftom the character language model
+  void RemoveCharacterSequenceFromCHPYLM(
+    const std::vector<int> &CharacterSequence
+  );
 
 public:
   /* constructor */
-  NHPYLM(unsigned int CHPYLMOrder_, unsigned int WHPYLMOrder_, const std::vector< std::string > &Symbols_, int CharactersBegin_); // construct nested hierarchical pitman yor language model
+  // construct nested hierarchical pitman yor language model
+  NHPYLM(
+    unsigned int CHPYLMOrder_,
+    unsigned int WHPYLMOrder_,
+    const std::vector< std::string > &Symbols_,
+    int CharactersBegin_,
+    const double WordBaseProbability_ = 0.0
+  );
 
   /* interface: language model */
-  void AddWordToLm(const const_witerator &Word);                                  // add word to language model
-  void AddWordSequenceToLm(const std::vector<int> &WordSequence);                 // add sequence of words to language model
-  void RemoveWordSequenceFromLm(const std::vector<int> &WordSequence);            // remove sequence of words from language model
-  bool RemoveWordFromLm(const const_witerator &Word);                             // remove word from language model
-  double WordProbability(const const_witerator &Word) const;                      // calculate probability of a word
-  std::vector<double> WordVectorProbability(const std::vector< int > &ContextSequence, const std::vector< int > &Words) const; // calculate probabilities of all words in given vector in given context
-  double WordSequenceLoglikelihood(const std::vector< int > &WordSequence) const; // calculate log likelihood of a word sequence
-  void ResampleHyperParameters();                                                 // Resample hyper parameters of the hierarchical models
-  const NHPYLMParameters &GetNHPYLMParameters() const;                            // Get the parameters of the CHPYLM and WHPYLM
-  int GetContextId(const std::vector<int> &ContextSequence) const;                // return id of given word context
-  HPYLM::ContextToContextTransitions GetTransitions(int ContextId, int SentEndWordId, const std::vector< bool > &ActiveWords) const; // Get possible transitions from one context to another
-  int GetFinalContextId() const;                                                  // get the final state (sentence end)
-  int GetCHPYLMOrder() const;                                                     // get the character hierarchical language model order
-  int GetWHPYLMOrder() const;                                                     // get the word hierarchical language model order
-  std::vector<int> GetTotalCountPerLevelFor(const std::string &LM, const std::string &CountName) const;  // get total count per level for given LM ("CHPYLM"|"WHPYLM") and name ("Context"|"Table"|"Word")
-  std::vector<std::vector<int> > Generate(std::string Mode, int NumWorsdOrCharacters, int SentEndWordId, std::vector<double> *GeneratedWordLengthDistribution_) const;                      // generate character or word sequences from the language models
-  void SetWHPYLMBaseProbabilitiesScale(const std::vector<double> &WHPYLMBaseProbabilitiesScale_);
+  // add word to language model
+  void AddWordToLm(
+    const const_witerator &Word
+  );
+
+  // add sequence of words to language model
+  void AddWordSequenceToLm(
+    const std::vector<int> &WordSequence
+  );
+
+  // remove sequence of words from language model
+  void RemoveWordSequenceFromLm(
+    const std::vector<int> &WordSequence
+  );
+
+  // remove word from language model
+  bool RemoveWordFromLm(
+    const const_witerator &Word
+  );
+
+  // calculate probability of a word
+  double WordProbability(
+    const const_witerator &Word
+  ) const;
+
+  // calculate probabilities of all words in given vector in given context
+  std::vector<double> WordVectorProbability(
+    const std::vector< int > &ContextSequence,
+    const std::vector< int > &Words
+  ) const;
+
+  // calculate log likelihood of a word sequence
+  double WordSequenceLoglikelihood(
+    const std::vector< int > &WordSequence
+  ) const;
+  
+  // Resample hyper parameters of the hierarchical models
+  void ResampleHyperParameters();
+  
+  // Get the parameters of the CHPYLM and WHPYLM
+  const NHPYLMParameters &GetNHPYLMParameters() const;
+  
+  // return id of given word context
+  int GetContextId(
+    const std::vector<int> &ContextSequence
+  ) const;
+  
+  // Get possible transitions from one context to another
+  ContextToContextTransitions GetTransitions(
+    int ContextId,
+    int SentEndWordId,
+    const std::vector< bool > &ActiveWords,
+    int ReturnToContextId = -1
+  ) const;
+
+  // get the final state (sentence end)
+  int GetFinalContextId() const;
+
+  // get start state (sentence start)
+  int GetRootContextId() const;
+
+  // get the character hierarchical language model order
+  int GetCHPYLMOrder() const;
+
+  // get the word hierarchical language model order
+  int GetWHPYLMOrder() const;
+
+  // get total count per level for given LM ("CHPYLM"|"WHPYLM")
+  // and name ("Context"|"Table"|"Word")
+  std::vector<int> GetTotalCountPerLevelFor(
+    const std::string &LM,
+    const std::string &CountName
+  ) const;
+
+  // generate character or word sequences from the language models
+  std::vector<std::vector<int> > Generate(
+    std::string Mode,
+    int NumWorsdOrCharacters,
+    int SentEndWordId,
+    std::vector<double> *GeneratedWordLengthDistribution_
+  ) const;
+  
+  void SetWHPYLMBaseProbabilitiesScale(
+    const std::vector<double> &WHPYLMBaseProbabilitiesScale_
+  );
+  
+  void SetCharBaseProb(
+    const int CharId,
+    const double prob
+  );
+
   const std::vector<double> &GetWHPYLMBaseProbabilitiesScale() const;
-  int GetWHPYLBaseTablesPerWord(int WordId) const;
-  void SetParameter(const std::string &LM, const std::string &Parameter, int Level, double Value);
+  
+  int GetWHPYLBaseTablesPerWord(
+    int WordId
+  ) const;
+
+  void SetParameter(
+    const std::string &LM,
+    const std::string &Parameter,
+    int Level,
+    double Value
+  );
 };
 
 #endif

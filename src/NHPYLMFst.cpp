@@ -146,7 +146,7 @@ const fst::LogArc *NHPYLMFst::GetArcs(StateId s) const
 {
   if (Arcs.at(s).size() == 0) {
     std::vector<fst::LogArc> &State = Arcs.at(s);
-    HPYLM::ContextToContextTransitions Transitions = LanguageModel.GetTransitions(s, SentEndWordId, ActiveWords);
+    ContextToContextTransitions Transitions = LanguageModel.GetTransitions(s, SentEndWordId, ActiveWords);
     int NumTransitions = Transitions.NextContextIds.size();
     for (int TransitionIdx = 0; TransitionIdx < NumTransitions; TransitionIdx++) {
       if (Transitions.Words.at(TransitionIdx) != PHI_SYMBOLID) {

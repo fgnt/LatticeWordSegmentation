@@ -348,7 +348,7 @@ const HPYLM::HPYLMParameters &HPYLM::GetHPYLMParameters() const
   return Parameters;
 }
 
-HPYLM::ContextToContextTransitions HPYLM::GetTransitions(int ContextId, int SentEndSymbolId, const std::vector<bool> &ActiveWords) const
+ContextToContextTransitions HPYLM::GetTransitions(int ContextId, int SentEndSymbolId, const std::vector<bool> &ActiveWords) const
 {
   ContextToContextTransitions Transitions;
 
@@ -495,7 +495,7 @@ HPYLM::HPYLMParameters::HPYLMParameters(unsigned int Order_, double Discount_, d
 {
 }
 
-HPYLM::ContextToContextTransitions::ContextToContextTransitions() :
+ContextToContextTransitions::ContextToContextTransitions() :
   Words(),
   NextContextIds(),
   Probabilities(),

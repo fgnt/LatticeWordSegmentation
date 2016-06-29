@@ -45,7 +45,7 @@
 #include <iomanip>
 #include <iostream>
 
-void DebugLib::PrintTransitions(const HPYLM::ContextToContextTransitions &Transitions, unsigned int CurrentContextId, std::vector< bool > &VisitedContextIds, const NHPYLM &LanguageModel, int SentEndWordId)
+void DebugLib::PrintTransitions(const ContextToContextTransitions &Transitions, unsigned int CurrentContextId, std::vector< bool > &VisitedContextIds, const NHPYLM &LanguageModel, int SentEndWordId)
 {
   if (VisitedContextIds.size() <= CurrentContextId) {
     VisitedContextIds.resize(CurrentContextId + 1, false);
