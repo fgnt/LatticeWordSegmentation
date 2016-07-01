@@ -48,8 +48,9 @@ add_library(FileReader
 )
 
 target_link_libraries(FileReader
-  boost_filesystem
-  boost_system
+#  boost_filesystem
+#  boost_system
+  ${LIBS}
   fst
   dl
 )
