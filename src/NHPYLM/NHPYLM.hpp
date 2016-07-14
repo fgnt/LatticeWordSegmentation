@@ -191,7 +191,7 @@ public:
   // generate character or word sequences from the language models
   std::vector<std::vector<int> > Generate(
     std::string Mode,
-    int NumWorsdOrCharacters,
+    int NumWordsOrCharacters,
     int SentEndWordId,
     std::vector<double> *GeneratedWordLengthDistribution_
   ) const;

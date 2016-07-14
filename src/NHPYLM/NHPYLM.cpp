@@ -440,7 +440,7 @@ std::vector< int > NHPYLM::GetTotalCountPerLevelFor(const std::string &LM, const
   }
 }
 
-std::vector< std::vector< int > > NHPYLM::Generate(std::string Mode, int NumWorsdOrCharacters, int SentEndWordId, std::vector<double> *GeneratedWordLengthDistribution_) const
+std::vector< std::vector< int > > NHPYLM::Generate(std::string Mode, int NumWordsOrCharacters, int SentEndWordId, std::vector<double> *GeneratedWordLengthDistribution_) const
 {
   if (Mode == "CHPYLM") {
     /* build vector of character ids */
@@ -476,7 +476,7 @@ std::vector< std::vector< int > > NHPYLM::Generate(std::string Mode, int NumWors
     std::vector<int> CurrentContext(CHPYLMOrder - 1, EOW);
     std::vector<int> GeneratedSentence;
     std::vector<std::vector<int> > GeneratedSentences;
-    while (NumWords < NumWorsdOrCharacters) {
+    while (NumWords < NumWordsOrCharacters) {
       GeneratedSentence.push_back(CHPYLM.GenerateWord(CurrentContext, CharacterIds, BaseProbabilites, true));
       WordLength++;
       if ((CHPYLMOrder > 1) && (GeneratedSentence.back() != EOW) && (GeneratedSentence.back() != EOS)) {
@@ -531,7 +531,7 @@ std::vector< std::vector< int > > NHPYLM::Generate(std::string Mode, int NumWors
     std::vector<int> CurrentContext(WHPYLMOrder - 1, SentEndWordId);
     std::vector<int> GeneratedSentence;
     std::vector<std::vector<int> > GeneratedSentences;
-    for (int NumWords = 0; NumWords < NumWorsdOrCharacters; NumWords++) {
+    for (int NumWords = 0; NumWords < NumWordsOrCharacters; NumWords++) {
       GeneratedSentence.push_back(WHPYLM.GenerateWord(CurrentContext, WordIds, BaseProbabilites, false));
       if ((WHPYLMOrder > 1) && (GeneratedSentence.back() != SentEndWordId)) {
         CurrentContext.erase(CurrentContext.begin());
