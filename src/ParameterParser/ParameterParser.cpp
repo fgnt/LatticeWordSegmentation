@@ -207,6 +207,8 @@ ParameterParser::ParameterParser(int argc, const char **argv):
       Parameters.PruningStart = atof(argv[++argPos]);
       Parameters.PruningStep = atof(argv[++argPos]);
       Parameters.PruningEnd = atof(argv[++argPos]);
+    } else if (!strcmp(argv[argPos], "-AMScoreShift")) {
+      Parameters.AMScoreShift = atof(argv[++argPos]);
     } else if (!strcmp(argv[argPos], "-ReadNodeTimes")) {
       Parameters.ReadNodeTimes = true;
     } else if (!strcmp(argv[argPos], "-WordData")) {
@@ -283,7 +285,7 @@ void ParameterParser::DieOnHelp(const std::string& err) const
             << "                         (-InitLM InitTranscriptionFilename ())"  << std::endl
             << "  -InitLmNumIterations:  Number of iterations for language model initialization"  << std::endl
             << "                         (-InitLmNumIterations NumIterations (0))"  << std::endl
-            << "  -PruningStep:          stepsize through pruning values during lper calculation"  << std::endl
+            << "  -PruningStep:          stepsize through pruning values during LPER calculation"  << std::endl
             << "                         (-PruningStep PruningStart PruningStep PruningEnd (inf 0 inf)"  << std::endl
             << "  -BeamWidth:            Beam width through the composed FST I*L*G. To disable pruning, set it to -1" << std::endl
             << "                         (-BeamWidth BeamWidth (-1))" << std::endl
@@ -425,6 +427,7 @@ ParameterStruct::ParameterStruct() :
   UseViterby(0),
   DeactivateCharacterModel(0),
   HTKLMScale(0),
+  AMScoreShift(0),
   ReadNodeTimes(false)
 {
 }

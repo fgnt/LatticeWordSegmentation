@@ -139,6 +139,7 @@ struct ParameterStruct {
   unsigned int UseViterby;                      // Set iteration to switch to viterby decoding. 0: off, >0 number of iteration (Patameter: -UseVitery NumIter)
   unsigned int DeactivateCharacterModel;        // Set iteration to deactivate character model. 0: off, >0 number of iteration (Patameter: -DeactivateCharacterModel NumIter)
   double HTKLMScale;                    // Language model scaling factor when reading HTK lattices (Parameter: -HTKLMScale K (0))
+  double AMScoreShift;                  // Normalize AM scores with additive shift constant
   bool ReadNodeTimes;                   // Read node timing informations from HTK lattice
 
   ParameterStruct(); // constructor to set default values

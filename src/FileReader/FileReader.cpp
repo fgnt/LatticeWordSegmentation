@@ -375,7 +375,7 @@ void FileReader::ReadHTKLattices()
         //acoustic model score
         float amScore;
         pos = cur.find("=");
-        amScore = -std::stof(cur.substr(pos + 1));
+        amScore = -(std::stof(cur.substr(pos + 1)) + Params.AMScoreShift);
 
         //lm score
         iss >> cur;
