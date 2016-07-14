@@ -9,9 +9,13 @@ cd openfst-1.5.0
 make -j4 install
 cd ..
 
-wget http://sourceforge.net/projects/boost/files/boost/1.60.0/boost_1_60_0.tar.bz2/download -O boost_1_60_0.tar.bz2
-tar -xjf boost_1_60_0.tar.bz2
-cd boost_1_60_0
-./bootstrap.sh --prefix=${PREFIX} --with-libraries=system,filesystem
-./b2 install
-cd ..
+if [[ "$1" == "--no-boost-install" ]]; then
+  echo "No installation of boost. Assume use of system-wide install."
+else
+  wget http://sourceforge.net/projects/boost/files/boost/1.60.0/boost_1_60_0.tar.bz2/download -O boost_1_60_0.tar.bz2
+  tar -xjf boost_1_60_0.tar.bz2
+  cd boost_1_60_0
+  ./bootstrap.sh --prefix=${PREFIX} --with-libraries=system,filesystem
+  ./b2 install
+  cd ..
+fi

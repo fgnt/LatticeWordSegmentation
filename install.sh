@@ -1,7 +1,17 @@
 #!/bin/sh
 
+case "$1" in
+  --help|-h)
+    echo "Script to install the latticewordsegmentation tool";
+    echo "option --no-boost-install: Do not install boost library"
+    exit 0;;
+  --no-boost-install);;
+  "");;
+  *)echo "Unknown parameter!"; exit 1;;
+esac
+
 cd tools
-./install.sh
+./install.sh "$1"
 cd ..
 
 mkdir -p build
