@@ -60,9 +60,9 @@
 #ifndef _RESTAURANT_HPP_
 #define _RESTAURANT_HPP_
 
+#include <random>
 #include "definitions.hpp"
 
-#include <random>
 
 /*
  * class for one restaurant containing the different words

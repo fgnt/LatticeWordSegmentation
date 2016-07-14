@@ -41,8 +41,10 @@
    Author: Oliver Walter
 */
 // ----------------------------------------------------------------------------
+#include <numeric>
 #include "WERCalculator.hpp"
 #include "../ParseLib.hpp"
+
 
 WERCalculator::WERCalculator(
   const vector< vector< int > > &InputSentences_,
