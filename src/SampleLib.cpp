@@ -69,6 +69,12 @@
 #include <beam-search.h>
 // #include "DebugLib.hpp"
 
+using std::vector;
+using std::string;
+using std::cout;
+using std::endl;
+using std::cerr;
+
 std::mutex SampleLib::mtx;
 
 void SampleLib::ComposeAndSampleFromInputLexiconAndLM(

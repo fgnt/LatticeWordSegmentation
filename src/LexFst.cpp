@@ -43,6 +43,12 @@
 // ----------------------------------------------------------------------------
 #include "LexFst.hpp"
 
+using std::vector;
+using std::string;
+using std::cout;
+using std::endl;
+using std::cerr;
+
 LexFst::LexFst(bool Debug_, const vector< string > &Symbols_, int CharactersBegin_, const std::vector<double> &CharacterSequenceProbabilityScale_) :
   Debug(Debug_),
   Symbols(Symbols_),

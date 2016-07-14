@@ -104,9 +104,9 @@ class ParseLib {
     const fst::Fst< fst::LogArc >& Sample,
     Dictionary* Dict,
     LexFst* LexiconTransducer,
-    vector< WordId >* Sentence,
-    vector< ArcInfo >* TimedSentence,
-    const vector< ArcInfo >& InputArcInfos
+    std::vector< WordId >* Sentence,
+    std::vector< ArcInfo >* TimedSentence,
+    const std::vector< ArcInfo >& InputArcInfos
   );
 
   // add character id sequence to dictionary and add new sewuences to lexicon
@@ -135,19 +135,19 @@ public:
     int SentEndWordId,
     NHPYLM* LanguageModel,
     LexFst* LexiconTransducer,
-    vector< WordId >* Sentence,
-    vector< ArcInfo >* TimedSentence,
-    const vector< ArcInfo >& InputArcInfos
+    std::vector< WordId >* Sentence,
+    std::vector< ArcInfo >* TimedSentence,
+    const std::vector< ArcInfo >& InputArcInfos
   );
 
-  // parse character lattice and add word ids to dictionary and return vector of
+  // parse character lattice and add word ids to dictionary and return std::vector of
   // word Ids
   static void ParseSampleAndAddCharacterIdSequenceToDictionary(
     const fst::Fst< fst::LogArc > &Sample,
     Dictionary *Dict,
-    vector< WordId >* Sentence,
-    vector< ArcInfo >* TimedSentence = nullptr,
-    const vector< ArcInfo >& InputArcInfos = std::vector<ArcInfo>()
+    std::vector< WordId >* Sentence,
+    std::vector< ArcInfo >* TimedSentence = nullptr,
+    const std::vector< ArcInfo >& InputArcInfos = std::vector<ArcInfo>()
   );
 };
 

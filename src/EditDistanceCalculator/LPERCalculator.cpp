@@ -48,6 +48,11 @@
 #include "LPERCalculator.hpp"
 
 
+using std::vector;
+using std::string;
+using std::cout;
+using std::endl;
+using std::cerr;
 
 LPERCalculator::LPERCalculator(const vector< fst::VectorFst< fst::LogArc > > &InputFsts_, const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts, const vector< string > &Id2CharacterSequenceVector, unsigned int NumThreads_, const std::vector<std::string> &FileNames_, const std::string &Prefix_, bool OutputEditOperations_, const std::vector<ArcInfo> &InputArcInfos_) :
   EditDistanceCalculator(NumThreads_, FileNames_, Prefix_, OutputEditOperations_)

@@ -109,13 +109,13 @@ class LatticeWordSegmentation {
   
   // train the language model from given sentences
   void TrainLanguageModel(
-    const std::vector<vector< int > > &Sentences,
+    const std::vector<std::vector< int > > &Sentences,
     std::size_t MaxNumLMTrainIter
   );
   
   // iterate over sentences
   void DoWordSegmentationSentenceIterations(
-    const vector< int > &ShuffledIndices,
+    const std::vector< int > &ShuffledIndices,
     LexFst *LexiconTransducer,
     std::size_t IdxIter
   );

@@ -46,6 +46,12 @@
 #include "../ParseLib.hpp"
 
 
+using std::vector;
+using std::string;
+using std::cout;
+using std::endl;
+using std::cerr;
+
 WERCalculator::WERCalculator(
   const vector< vector< int > > &InputSentences_,
   const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts_,

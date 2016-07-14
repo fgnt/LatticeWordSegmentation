@@ -114,7 +114,7 @@ public:
     const NHPYLM *LanguageModel,
     int SentEndWordId,
     fst::VectorFst< fst::LogArc > *SampledFst,
-    vector< LatticeWordSegmentationTimer::SimpleTimer > *tInSample,
+    std::vector< LatticeWordSegmentationTimer::SimpleTimer > *tInSample,
     int beamWidth,
     bool UseViterby);
 };

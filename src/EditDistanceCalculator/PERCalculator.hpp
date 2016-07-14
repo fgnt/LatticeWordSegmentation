@@ -72,7 +72,7 @@ class PERCalculator : public EditDistanceCalculator {
 
   /* internal functions */
   void ParseFsts(
-    const vector< fst::VectorFst< fst::LogArc > > &Fsts_,
+    const std::vector< fst::VectorFst< fst::LogArc > > &Fsts_,
     std::vector< std::vector< int > > *Sentences,
     const std::vector<ArcInfo> &InputArcInfos_
   );
@@ -80,12 +80,12 @@ class PERCalculator : public EditDistanceCalculator {
 public:
   /* constructor */
   PERCalculator(
-    const vector< fst::VectorFst< fst::LogArc > > &InputFsts,
-    const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts,
-    const vector< string > &Id2CharacterSequenceVector,
+    const std::vector< fst::VectorFst< fst::LogArc > > &InputFsts,
+    const std::vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts,
+    const std::vector< std::string > &Id2CharacterSequenceVector,
     unsigned int NumThreads_,
-    const vector< string > &FileNames_,
-    const string &Prefix_,
+    const std::vector< std::string > &FileNames_,
+    const std::string &Prefix_,
     bool OutputEditOperations_,
     const std::vector<ArcInfo> &InputArcInfos_
   );

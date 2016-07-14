@@ -47,6 +47,13 @@
 #include "EditDistanceCalculator.hpp"
 #include "definitions.hpp"
 
+using std::vector;
+using std::string;
+using std::cout;
+using std::endl;
+using std::cerr;
+
+
 EditDistanceCalculator::EditDistanceCalculator(unsigned int NumThreads_, const std::vector<std::string> &FileNames_, const std::string &Prefix_, bool OutputEditOperations_) :
   NumThreads(NumThreads_),
   InsDelSubCorrNFoundNRef(6, 0),

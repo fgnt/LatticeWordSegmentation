@@ -44,6 +44,12 @@
 #include "NHPYLMFst.hpp"
 #include "definitions.hpp"
 
+using std::vector;
+using std::string;
+using std::cout;
+using std::endl;
+using std::cerr;
+
 const int NHPYLMFst::kFileVersion = 1;
 
 NHPYLMFst::NHPYLMFst(const NHPYLM &LanguageModel_, int SentEndWordId_, const vector< bool > &ActiveWords_) :

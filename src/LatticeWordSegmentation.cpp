@@ -54,6 +54,12 @@
 #include "WordLengthProbCalculator.hpp"
 #include "Evaluate/Evaluate.hpp"
 
+using std::vector;
+using std::string;
+using std::cout;
+using std::endl;
+using std::cerr;
+
 std::default_random_engine LatticeWordSegmentation::RandomGenerator(
   std::chrono::system_clock::now().time_since_epoch().count()
 );

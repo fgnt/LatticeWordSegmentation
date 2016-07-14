@@ -104,7 +104,7 @@ public:
   /* constructor */
   LexFst(
     bool pDebug,
-    const vector< string > &pSymbols,
+    const std::vector< std::string > &pSymbols,
     int pCharactersBegin,
     const std::vector<double> &CharacterSequenceProbabilityScale
   );

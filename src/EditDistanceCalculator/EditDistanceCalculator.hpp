@@ -93,22 +93,22 @@ class EditDistanceCalculator {
   void CalculateEditDistance();
 
   static inline void CalculateEditDistanceIdxRange(
-    const vector< fst::VectorFst< fst::StdArc > > *InputFsts,
-    const vector< fst::VectorFst< fst::StdArc > > *ReferenceFsts,
-    vector< fst::VectorFst< fst::StdArc > > *ResultFsts,
+    const std::vector< fst::VectorFst< fst::StdArc > > *InputFsts,
+    const std::vector< fst::VectorFst< fst::StdArc > > *ReferenceFsts,
+    std::vector< fst::VectorFst< fst::StdArc > > *ResultFsts,
     const fst::VectorFst< fst::StdArc > *LeftFactor,
     const fst::VectorFst< fst::StdArc > *RightFactor,
-    vector< int > *InsDelSubCorrNFoundNRef,
+    std::vector< int > *InsDelSubCorrNFoundNRef,
     unsigned int StartIdx,
     unsigned int EndIdx,
-    const vector< string > *Id2CharacterSequenceVector,
-    const vector< string > *Filenames,
-    const string *Prefix,
+    const std::vector< std::string > *Id2CharacterSequenceVector,
+    const std::vector< std::string > *Filenames,
+    const std::string *Prefix,
     bool OutputEditOperations
   );
   
   static inline void BuildFstFromIdSequence(
-    const vector< int > &IdSequence,
+    const std::vector< int > &IdSequence,
     fst::VectorFst< fst::StdArc > *Fst
   );
   
@@ -118,34 +118,34 @@ class EditDistanceCalculator {
     fst::VectorFst< fst::StdArc > *ResultFst,
     const fst::VectorFst< fst::StdArc > &LeftFactor,
     const fst::VectorFst< fst::StdArc > &RightFactor,
-    vector< int > *InsDelSubCorrNFoundNRef,
-    const vector< string > *Id2CharacterSequenceVector,
-    const string *FileName,
-    const string *Prefix,
+    std::vector< int > *InsDelSubCorrNFoundNRef,
+    const std::vector< std::string > *Id2CharacterSequenceVector,
+    const std::string *FileName,
+    const std::string *Prefix,
     bool OutputEditOperations);
 
 protected:
   /* interface for derived classes */
   void SetInputAndReferenceSentences(
-    const vector< vector< int > > &InputSentences_,
-    const vector< vector< int > > &ReferenceSentences_,
+    const std::vector< std::vector< int > > &InputSentences_,
+    const std::vector< std::vector< int > > &ReferenceSentences_,
     const std::vector<int> &InputAndOutputIds_,
     const std::vector<std::string> &Id2CharacterSequenceVector_
   );
   
   void SetInputFstsAndReferenceSentences(
-    const vector< fst::VectorFst< fst::StdArc > > &InputFsts_,
-    const vector< vector< int > > &ReferenceSentence,
-    const vector< int > &InputAndOutputIds_,
-    const vector< string > &Id2CharacterSequenceVector_
+    const std::vector< fst::VectorFst< fst::StdArc > > &InputFsts_,
+    const std::vector< std::vector< int > > &ReferenceSentence,
+    const std::vector< int > &InputAndOutputIds_,
+    const std::vector< std::string > &Id2CharacterSequenceVector_
   );
 
 public:
   /* constructor */
   EditDistanceCalculator(
     unsigned int NumThreads_,
-    const vector< string > &FileNames_,
-    const string &Prefix_,
+    const std::vector< std::string > &FileNames_,
+    const std::string &Prefix_,
     bool OutputEditOperations_
   );
   

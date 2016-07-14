@@ -65,6 +65,12 @@
 #include "ParseLib.hpp"
 // #include "DebugLib.hpp"
 
+using std::vector;
+using std::string;
+using std::cout;
+using std::endl;
+using std::cerr;
+
 int ParseLib::AddCharacterIdSequenceToDictionaryAndLexFST(
   const vector< int > &Characters,
   Dictionary *LanguageModel,

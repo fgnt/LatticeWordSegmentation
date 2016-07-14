@@ -75,31 +75,31 @@ class WERCalculator : public EditDistanceCalculator {
 
   /* internal functions */
   void TrimInputSentences(
-    const vector< vector< int > > &InputSentences_,
+    const std::vector< std::vector< int > > &InputSentences_,
     int WHPYLMContextLength
   );
 
   void ParseReferenceFsts(
-    const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts);
+    const std::vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts);
   
   void CalcLexiconCorrNFoundNRef();
 
 public:
   /* constructor */
   WERCalculator(
-    const vector< vector< int > > &InputSentences_,
-    const vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts_,
+    const std::vector< std::vector< int > > &InputSentences_,
+    const std::vector< fst::VectorFst< fst::LogArc > > &ReferenceFsts_,
     const Dictionary &dict_,
     int WHPYLMContextLength,
     unsigned int NumThreads_,
-    const vector< string > &FileNames_,
-    const string &Prefix_,
+    const std::vector< std::string > &FileNames_,
+    const std::string &Prefix_,
     bool OutputEditOperations_
   );
 
   
   /* interface */
-  const vector< int > &GetLexiconCorrNFoundNRef() const;
+  const std::vector< int > &GetLexiconCorrNFoundNRef() const;
 };
 
 #endif
