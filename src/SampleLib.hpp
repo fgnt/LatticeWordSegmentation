@@ -90,24 +90,26 @@
 /* library for generating and parsing samples from input lattice */
 class SampleLib {
   
-  static std::mutex mtx;
-
   // find all active words in the word fst
   inline static std::vector< bool > GetActiveWordIdsInFst(
     const fst::Fst< fst::LogArc > &SegmentFST,
-    int MaxNumWords);
+    int MaxNumWords
+  );
 
   // generate sample from weighted input lattice
-  inline static void SampGen(const fst::Fst< fst::LogArc > &ifst,
-                             fst::MutableFst< fst::LogArc > *ofst,
-                             unsigned int nbest);
+  inline static void SampGen(
+    const fst::Fst< fst::LogArc > &ifst,
+    fst::MutableFst< fst::LogArc > *ofst,
+    unsigned int nbest
+  );
 
   // used to draw a discrete sample from log probability vector
   inline static unsigned SampleWeights(
-    std::vector<float> *ws);
+    std::vector<float> *ws
+  );
 
 public:
-  // compose with lexicon fst and language model fst and samle output fst
+  // compose with lexicon fst and language model fst and sample output fst
   static void ComposeAndSampleFromInputLexiconAndLM(
     const fst::Fst< fst::LogArc > *InputFst,
     const fst::Fst< fst::LogArc > *LexiconTransducer,
@@ -116,7 +118,17 @@ public:
     fst::VectorFst< fst::LogArc > *SampledFst,
     std::vector< LatticeWordSegmentationTimer::SimpleTimer > *tInSample,
     int beamWidth,
-    bool UseViterby);
+    bool UseViterby
+  );
+
+  // compose with additional character language model and sample output fst
+  static void ComposeAndSampleFromInputAndAddCharLM(
+    const fst::Fst< fst::LogArc >* InputFst,
+    const NHPYLMFst* CharacterLanguageModelFST,
+    fst::VectorFst< fst::LogArc >* SampledFst,
+    const LogVectorFst* WordEndTransducer,
+    std::vector< LatticeWordSegmentationTimer::SimpleTimer > *tInSample
+  );
 };
 
 #endif

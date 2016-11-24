@@ -99,7 +99,7 @@ void NHPYLM::AddWordToLm(const const_witerator &Word)
 
   /* get base probability for character sequence represting word */
   const std::vector<int> *CharacterSequence = nullptr;
-  if (NumCharacters > 0) {
+  if ((NumCharacters > 0) && (CHPYLMOrder > 0)) {
     CharacterSequence = &GetWordVector(*Word);
   }
 //  for(const_citerator it = CharacterSequence.begin() + CHPYLMOrder - 1; it != CharacterSequence.end(); ++it) {
@@ -212,21 +212,21 @@ void NHPYLM::RemoveCharacterSequenceFromCHPYLM(const std::vector<int> &Character
 
 double NHPYLM::WordProbability(const const_witerator &Word) const
 {
-  mtx.lock();
   /* get base probability for character sequence represting word and calculate word probability */
-
   double BaseProbability;
   if ((WordBaseProbability == 0.0) && (NumCharacters > 0) && (CHPYLMOrder > 0)) {
-      google::dense_hash_map<int, double>::const_iterator it = WHPYLMBaseProbabilities.find(*Word);
-      if (it == WHPYLMBaseProbabilities.end()) {
-        it = WHPYLMBaseProbabilities.insert(std::make_pair(*Word, exp(CHPYLM.WordSequenceLoglikelihood(GetWordVector(*Word), CHPYLMBaseProbabilities)))).first;
-      }
-    BaseProbability = it->second;
+    mtx.lock();
+    google::dense_hash_map<int, double>::const_iterator it = WHPYLMBaseProbabilities.find(*Word);
+    if (it == WHPYLMBaseProbabilities.end()) {
+      BaseProbability = exp(CHPYLM.WordSequenceLoglikelihood(GetWordVector(*Word), CHPYLMBaseProbabilities));
+      WHPYLMBaseProbabilities.insert(std::make_pair(*Word, BaseProbability));
+    } else {
+      BaseProbability = it->second;
+    }
+    mtx.unlock();
   } else {
     BaseProbability = WordBaseProbability;
   }
-
-  mtx.unlock();
 
   return WHPYLM.WordProbability(Word, BaseProbability);
 }
@@ -236,11 +236,18 @@ std::vector<double> NHPYLM::WordVectorProbability(const std::vector< int > &Cont
   /* get base probability for character sequences represting words and calculate word probabilities */
   std::vector<double> BaseProbabilites;
   BaseProbabilites.reserve(Words.size());
-  mtx.lock();
+  
+  bool CalculateWHPYLMBaseProbabilities(
+    (WordBaseProbability == 0.0) && (NumCharacters > 0) && (CHPYLMOrder > 0)
+  );
+  if (CalculateWHPYLMBaseProbabilities) {
+    mtx.lock();
+  }
+  
   for (std::vector<int>::const_iterator Word = Words.begin(); Word != Words.end(); ++Word) {
     double BaseProbability;
     if (*Word != PHI) {
-      if ((WordBaseProbability == 0.0) && (NumCharacters > 0) && (CHPYLMOrder > 0)) {
+      if (CalculateWHPYLMBaseProbabilities) {
         google::dense_hash_map<int, double>::const_iterator it = WHPYLMBaseProbabilities.find(*Word);
         if (it == WHPYLMBaseProbabilities.end()) {
   //    std::cout << *Word << ":" << dict.get_word_vector(*Word).size() << std::endl;
@@ -257,7 +264,9 @@ std::vector<double> NHPYLM::WordVectorProbability(const std::vector< int > &Cont
       BaseProbabilites.push_back(0);
     }
   }
-  mtx.unlock();
+  if (CalculateWHPYLMBaseProbabilities) {
+    mtx.unlock();
+  }
   WHPYLM.WordVectorProbability(ContextSequence, Words, &BaseProbabilites);
   return BaseProbabilites;
 }
@@ -314,7 +323,8 @@ ContextToContextTransitions NHPYLM::GetTransitions(
   int ContextId,
   int SentEndWordId,
   const std::vector<bool> &ActiveWords,
-  int ReturnToContextId
+  int ReturnToContextId,
+  const std::vector<int> &AvailableWords
 ) const
 {
   int WordContextIdOffset = GetRootContextId();
@@ -392,6 +402,23 @@ ContextToContextTransitions NHPYLM::GetTransitions(
           Transitions.NextContextIds.push_back(FinalContextId);
         } else {
           Transitions.NextContextIds.push_back(ReturnToContextId);
+        }
+      }
+      
+      if (Transitions.Words.size() < (AvailableWords.size() + 1)) {
+        std::vector<int> PresentWords(Transitions.Words);
+        std::sort(PresentWords.begin(), PresentWords.end());
+
+        std::vector<int> MissingWords;
+        MissingWords.resize(AvailableWords.size());
+
+        std::vector<int>::const_iterator MissingWordsEnd;
+        MissingWordsEnd = std::set_difference(AvailableWords.begin(), AvailableWords.end(), PresentWords.begin(), PresentWords.end(), MissingWords.begin());
+        std::vector<int> MissingWordContextSequence(1);
+        for (std::vector<int>::iterator MissingWord = MissingWords.begin(); MissingWord != MissingWordsEnd; ++MissingWord) {
+          Transitions.Words.push_back(*MissingWord);
+          MissingWordContextSequence[0] = *MissingWord;
+          Transitions.NextContextIds.push_back(WHPYLM.GetContextId(MissingWordContextSequence));
         }
       }
     }
@@ -501,10 +528,10 @@ std::vector< std::vector< int > > NHPYLM::Generate(std::string Mode, int NumWord
 
     for (unsigned int WordLength = 0; WordLength < WordLengthsProbabilities->size(); WordLength++) {
       WordLengthsProbabilities->at(WordLength) /= NumWords;
-      std::cout << std::setprecision(4) << std::fixed << "Word length: " << WordLength << ", word length probability: " << WordLengthsProbabilities->at(WordLength) << std::endl;
+      // std::cout << std::setprecision(4) << std::fixed << "Word length: " << WordLength << ", word length probability: " << WordLengthsProbabilities->at(WordLength) << std::endl;
     }
     MeanWordLength /= NumWords;
-    std::cout << "Mean word length: " << MeanWordLength << ", number of words: " << NumWords << std::endl << std::endl;
+    std::cout << " Mean length of generated words by CHPYLM: " << MeanWordLength << ", number of words: " << NumWords << std::endl << std::endl;
 
     return GeneratedSentences;
   } else if (Mode == "WHPYLM") {

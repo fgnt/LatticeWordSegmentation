@@ -53,7 +53,7 @@
 #include "../DebugLib.hpp"
 #include "../EditDistanceCalculator/LPERCalculator.hpp"
 
-FileReader::FileReader(ParameterStruct Params) :
+FileReader::FileReader(const ParameterStruct& Params) :
   Params(Params)
 {
   GlobalStringToInt.Insert(EPS_SYMBOL);
@@ -108,7 +108,8 @@ FileData FileReader::GetInputFileData()
 {
   return FileData(GlobalStringToInt, InitStringToInt, InitFsts, InitFileNames,
                   InputStringToInt, InputFsts, InputFileNames, InputArcInfos,
-                  ReferenceStringToInt, ReferenceFsts, ReferenceFileNames);
+                  ReferenceStringToInt, ReferenceFsts, ReferenceFileNames,
+                  GetWordEndTransducer());
 }
 
 
@@ -245,19 +246,19 @@ void FileReader::ReadHTKLattices()
       std::cout << "Reading utterance: " << utterance << std::endl;
     }
 
-    //get LM factor
-    while (std::getline(in, line) &&
-        line.substr(0, 7) != "lmscale" && line.substr(0, 1) != "N") {
-      std::getline(in, line);
-    }
-
-    if (line.substr(0, 7) == "lmscale") {
-      std::istringstream iss(line);
-      string lmScaleString;
-      iss >> lmScaleString;
-      pos = lmScaleString.find("=");
-      lmscale = std::stof(lmScaleString.substr(pos + 1));
-    }
+//     //get LM factor
+//     while (std::getline(in, line) &&
+//         line.substr(0, 7) != "lmscale" && line.substr(0, 1) != "N") {
+//       std::getline(in, line);
+//     }
+// 
+//     if (line.substr(0, 7) == "lmscale") {
+//       std::istringstream iss(line);
+//       string lmScaleString;
+//       iss >> lmScaleString;
+//       pos = lmScaleString.find("=");
+//       lmscale = std::stof(lmScaleString.substr(pos + 1));
+//     }
 
     //get Nodes and Links
     while (in.good() && line.substr(0, 1) != "N") {
@@ -790,7 +791,7 @@ void FileReader::ApplyAcousticModelScalingFactor()
 }
 
 
-void FileReader::ApplyWordEndTransducer()
+LogVectorFst FileReader::GetWordEndTransducer()
 {
   LogVectorFst WordEndTransducer;
   StateId UNKState = WordEndTransducer.AddState();
@@ -802,7 +803,7 @@ void FileReader::ApplyWordEndTransducer()
     fst::LogArc(EPS_SYMBOLID, UNKEND_SYMBOLID, 0, UNKState));
   WordEndTransducer.AddArc(CharacterState,
     fst::LogArc(UNKEND_SYMBOLID, UNKEND_SYMBOLID, 0, UNKState));
-  for (std::size_t k = CHARACTERSBEGIN;
+  for (std::size_t k = SENTEND_SYMBOLID;
        k < InputStringToInt.GetIntToStringVector().size(); k++) {
 
     WordEndTransducer.AddArc(UNKState,
@@ -811,6 +812,14 @@ void FileReader::ApplyWordEndTransducer()
     WordEndTransducer.AddArc(CharacterState,
       fst::LogArc(k, k, 0, CharacterState));
   }
+  
+  return WordEndTransducer;
+}
+
+
+void FileReader::ApplyWordEndTransducer()
+{
+  LogVectorFst WordEndTransducer(GetWordEndTransducer());
 
   for (auto& currentInputFst: InputFsts) {
     currentInputFst = LogComposeFst(currentInputFst, WordEndTransducer);

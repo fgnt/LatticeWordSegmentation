@@ -63,9 +63,22 @@
 #include <fst/fst.h>
 #include "NHPYLM/NHPYLM.hpp"
 #include "definitions.hpp"
+#include <memory>
+#include <mutex>
 
 /* fst for nested hierachical pitman yor language model */
 class NHPYLMFst : public fst::Fst<fst::LogArc> {
+  class ArcsContainer {
+    std::vector<std::vector<fst::LogArc> > Arcs;
+    std::vector<std::mutex> mtxs;
+
+  public:
+    ArcsContainer(int NumElements);
+    std::vector<fst::LogArc>& at(int Idx);
+    void lock(int Idx);
+    void unlock(int Idx);
+    std::mutex& GetMutex(int Idx);
+  };
   typedef fst::LogArc::StateId StateId; // state ids
   typedef fst::LogArc::Weight Weight;   // weights
 
@@ -81,8 +94,11 @@ class NHPYLMFst : public fst::Fst<fst::LogArc> {
   const std::string FSTType;      // type of fst
   const std::vector<bool> ActiveWords; // vector indicating active words
   const int FallbackSymbolId;     // the fallback symbol id used for input symbols (either EPS or PHI)
+  const bool ReturnToStart;       // return to start context after SentEndWordId or terminate in final context
+  const int ReturnToContextId;    // context id to return to after SentEndWordId
+  std::vector<int> AvailableWords; // AvailableWords which need to present in language model
 
-  mutable std::vector<std::vector<fst::LogArc> > Arcs; // vector containing arcs of all states
+  mutable std::shared_ptr<ArcsContainer > Arcs; // vector containing arcs of all states
 
   /* internal functions */
   // get transitions from language model and build arcs
@@ -95,13 +111,17 @@ class NHPYLMFst : public fst::Fst<fst::LogArc> {
     const fst::LogArc &i,
     const fst::LogArc &j
   );
+  
 public:
   /* constructor and destructor */
   // setup the fst for the nested hierarchical pitman yor language model
   NHPYLMFst(
     const NHPYLM &LanguageModel_,
     int SentEndWordId_,
-    const std::vector<bool> &ActiveWords_
+    const std::vector<bool> &ActiveWords_,
+    bool ReturnToStart_ = false,
+    const std::vector<int> &AvailableWords_ = std::vector<int>(),
+    std::shared_ptr<ArcsContainer> Arcs_ = nullptr
   );
 
 

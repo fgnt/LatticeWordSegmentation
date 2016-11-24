@@ -86,6 +86,10 @@ class LatticeWordSegmentation {
   std::size_t SentEndWordId;       // the sentence end word id
   std::size_t WHPYLMContextLength; // the context length for the whpylm with given order
 
+  /* character language model */
+  NHPYLM *CharacterLanguageModel; // the character language model
+  std::vector<int> AvailChars; // vector containing availabe character ids
+
   /* sampling data */
   std::size_t NumSampledSentences;                          // number of sentences in input
   std::vector<LogVectorFst > SampledFsts;                   // the sampled fsts
@@ -100,19 +104,20 @@ class LatticeWordSegmentation {
   /* internal functions */
   // initialize a language model
   void InitializeLanguageModel(
-    int NewUnkN,
-    int NewKnownN
+    int UnkN,
+    int KnownN,
+    int AddCharN
   );
-  
+
   // initialize with initiliazation fsts
   void ParseInitializationSentencesAndInitializeLanguageModel();
-  
+
   // train the language model from given sentences
   void TrainLanguageModel(
     const std::vector<std::vector< int > > &Sentences,
     std::size_t MaxNumLMTrainIter
   );
-  
+
   // iterate over sentences
   void DoWordSegmentationSentenceIterations(
     const std::vector< int > &ShuffledIndices,
@@ -121,8 +126,13 @@ class LatticeWordSegmentation {
   );
 
   // switch to a new language  model order
-  void SwitchLanguageModelOrders(int NewUnkN, int NewKnownN);
+  void SwitchLanguageModelOrders(
+    int NewUnkN,
+    int NewKnownN,
+    int NewAddCharN
+  );
 
+    void WriteRescoredLattices();
 public:
   /* constructor */
   LatticeWordSegmentation(

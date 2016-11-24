@@ -76,9 +76,16 @@ int ParseLib::AddCharacterIdSequenceToDictionaryAndLexFST(
   Dictionary *LanguageModel,
   LexFst *LexiconTransducer)
 {
-  WordIdAddedPair wIdAddedPair = LanguageModel->AddCharacterIdSequenceToDictionary(Characters.begin(), Characters.size());
+  WordIdAddedPair wIdAddedPair =
+    LanguageModel->AddCharacterIdSequenceToDictionary(
+      Characters.begin(),
+      Characters.size()
+    );
   if (wIdAddedPair.second && (LexiconTransducer != NULL)) {
-    LexiconTransducer->addWord(Characters.begin(), Characters.size(), wIdAddedPair.first);
+    LexiconTransducer->addWord(Characters.begin(),
+                               Characters.size(),
+                               wIdAddedPair.first
+                              );
   }
   return wIdAddedPair.first;
 }
@@ -93,7 +100,12 @@ void ParseLib::RemoveWordsFromDictionaryLexFSTAndLM(
 //   std::cout << "Removing: ";
 //   DebugLib::PrintSentence(Word, NumWords, LanguageModel->GetId2CharacterSequenceVector());
   for (int IdxWord = 0; IdxWord < NumWords; ++IdxWord) {
-    RemoveWordFromDictionaryLexFSTAndLM(Word + IdxWord, LanguageModel, LexiconTransducer, SentEndWordId);
+    RemoveWordFromDictionaryLexFSTAndLM(
+      Word + IdxWord,
+      LanguageModel,
+      LexiconTransducer,
+      SentEndWordId
+    );
   }
 }
 
@@ -106,7 +118,8 @@ void ParseLib::RemoveWordFromDictionaryLexFSTAndLM(
 //   std::cout << "Removing: " << *Word << " from LM" << std::endl;
   if (LanguageModel->RemoveWordFromLm(Word) && (*Word != SentEndWordId)) {
 //     std::cout << "Removing: " << *Word << " from Lexicon and Transducer" << std::endl;
-    WordBeginLengthPair WordBeginLengh = LanguageModel->GetWordBeginLength(*Word);
+    WordBeginLengthPair WordBeginLengh =
+      LanguageModel->GetWordBeginLength(*Word);
     LexiconTransducer->rmWord(WordBeginLengh.first, WordBeginLengh.second);
     LanguageModel->RemoveWordFromDictionary(*Word);
   }
@@ -123,8 +136,13 @@ void ParseLib::ParseSampleAndAddCharacterIdSequenceToDictionaryLexFstAndLM(
 {
 //   std::cout << "Parsing: " << std::endl;
   ParseSampleAndAddCharacterIdSequenceToDictionaryAndLexFst(
-    Sample, LanguageModel, LexiconTransducer,
-    Sentence, TimedSentence, InputArcInfos);
+    Sample,
+    LanguageModel,
+    LexiconTransducer,
+    Sentence,
+    TimedSentence,
+    InputArcInfos
+  );
   int WHPYLMContextLenght = LanguageModel->GetWHPYLMOrder() - 1;
   Sentence->insert(Sentence->begin(), WHPYLMContextLenght, SentEndWordId);
 
@@ -196,7 +214,10 @@ void ParseLib::ParseSampleAndAddCharacterIdSequenceToDictionaryAndLexFst(
         throw std::runtime_error("End of word symbol with empty buffer");
       }
       WordId wid = AddCharacterIdSequenceToDictionaryAndLexFST(
-        charBuf, Dict, LexiconTransducer);
+        charBuf,
+        Dict,
+        LexiconTransducer
+      );
       Sentence->push_back(wid);
       if (!InputArcInfos.empty()) {
         TimedSentence->push_back(ArcInfo(wid, WordStartTime, WordEndTime));
@@ -217,7 +238,10 @@ void ParseLib::ParseSampleAndAddCharacterIdSequenceToDictionaryAndLexFst(
   // clean up the remaining buffer
   if (charBuf.size() > 0) {
     WordId wid = AddCharacterIdSequenceToDictionaryAndLexFST(
-      charBuf, Dict, LexiconTransducer);
+      charBuf,
+      Dict,
+      LexiconTransducer
+    );
     Sentence->push_back(wid);
     if (!InputArcInfos.empty()) {
       TimedSentence->push_back(ArcInfo(wid, WordStartTime, WordEndTime));
@@ -236,5 +260,51 @@ void ParseLib::ParseSampleAndAddCharacterIdSequenceToDictionary(
   const vector< ArcInfo > &InputArcInfos)
 {
   ParseSampleAndAddCharacterIdSequenceToDictionaryAndLexFst(
-    Sample, Dict, nullptr, Sentence, TimedSentence, InputArcInfos);
+    Sample,
+    Dict,
+    nullptr,
+    Sentence,
+    TimedSentence,
+    InputArcInfos
+  );
+}
+
+void ParseLib::AddWordSequenceToAddCharLM(
+  const const_witerator &Word,
+  int NumWords,
+  const Dictionary& LanguageModel,
+  NHPYLM* CharacterLanguageModel
+)
+{
+  int ContextLength = CharacterLanguageModel->GetWHPYLMOrder() - 1;
+  for (int IdxWord = 0; IdxWord < NumWords; IdxWord++) {
+    auto WordBeginLengh = LanguageModel.GetWordBeginLength(*(Word + IdxWord));
+    std::vector<int> CharacterSequence(ContextLength, EOW);
+    CharacterSequence.insert(
+      CharacterSequence.end(),
+      WordBeginLengh.first,
+      WordBeginLengh.first + WordBeginLengh.second);
+    CharacterSequence.push_back(EOW);
+    CharacterLanguageModel->AddWordSequenceToLm(CharacterSequence);
+  }
+}
+
+void ParseLib::RemoveWordSequenceFromAddCharLM(
+  const const_witerator &Word,
+  int NumWords,
+  const Dictionary& LanguageModel,
+  NHPYLM* CharacterLanguageModel
+)
+{
+  int ContextLength = CharacterLanguageModel->GetWHPYLMOrder() - 1;
+  for (int IdxWord = 0; IdxWord < NumWords; IdxWord++) {
+    auto WordBeginLengh = LanguageModel.GetWordBeginLength(*(Word + IdxWord));
+    std::vector<int> CharacterSequence(ContextLength, EOW);
+    CharacterSequence.insert(
+      CharacterSequence.end(),
+      WordBeginLengh.first,
+      WordBeginLengh.first + WordBeginLengh.second);
+    CharacterSequence.push_back(EOW);
+    CharacterLanguageModel->RemoveWordSequenceFromLm(CharacterSequence);
+  }
 }

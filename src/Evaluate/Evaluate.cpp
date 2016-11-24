@@ -111,6 +111,9 @@ void Evaluate::OutputMeasureStatistics(
 
     // output some language model stats
     DebugLib::PrintLanguageModelStats(*LanguageModel);
+    if (CharacterLanguageModel != nullptr) {
+      DebugLib::PrintLanguageModelStats(*CharacterLanguageModel);
+    }
 
     // output some timing statistics
     Timer.PrintTimingStatistics();

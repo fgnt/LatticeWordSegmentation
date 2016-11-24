@@ -74,7 +74,7 @@ class FileData{
   // filename of read initialization files
   std::vector<std::string> InitFileNames;
 
-  // membersf for input fsts
+  // members for input fsts
   StringToIntMapper InputStringToInt;
   std::vector<LogVectorFst> InputFsts;
   std::vector<std::string> InputFileNames;
@@ -84,6 +84,9 @@ class FileData{
   StringToIntMapper ReferenceStringToInt;
   std::vector<LogVectorFst> ReferenceFsts;
   std::vector<std::string> ReferenceFileNames;
+  
+  // members for special transducers
+  LogVectorFst WordEndTransducer;
 
 public:
   /* Constructor */
@@ -98,7 +101,8 @@ public:
     std::vector<ArcInfo> InputArcInfos,
     StringToIntMapper ReferenceStringToInt,
     std::vector<LogVectorFst> ReferenceFsts,
-    std::vector<std::string> ReferenceFileNames
+    std::vector<std::string> ReferenceFileNames,
+    LogVectorFst WordEndTransducer
   );
 
 
@@ -129,6 +133,8 @@ public:
   const std::vector<std::string> &GetInitFileNames() const;
 
   const std::vector<ArcInfo> &GetInputArcInfos() const;
+  
+  const LogVectorFst &GetWordEndTransducer() const;
 };
 
 #endif // _FILEDATA_HPP_

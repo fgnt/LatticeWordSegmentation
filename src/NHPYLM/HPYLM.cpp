@@ -86,7 +86,7 @@ bool HPYLM::AddWordRecursively(const const_witerator &Word, unsigned int level, 
   /* check if end of tree is reached */
   if (level < Order) {
     /* adjust base probability for word acording to current context */
-    BaseProbability = CurrentRestaurant->ThisRestaurant.WordProbability(*Word, BaseProbability);
+    double NextBaseProbability = CurrentRestaurant->ThisRestaurant.WordProbability(*Word, BaseProbability);
 
     /* find or create restaurant for given context */
     ContextsHashmap::iterator it = CurrentRestaurant->NextContext.find(*(Word - level));
@@ -109,7 +109,7 @@ bool HPYLM::AddWordRecursively(const const_witerator &Word, unsigned int level, 
     }
 
     /* recursively add word to tree */
-    if (!AddWordRecursively(Word, level + 1, it->second, BaseProbability)) {
+    if (!AddWordRecursively(Word, level + 1, it->second, NextBaseProbability)) {
       /* finish recursive adding */
       return false;
     }

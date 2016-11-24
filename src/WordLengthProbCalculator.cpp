@@ -103,7 +103,7 @@ const std::vector<double> &WordLengthProbCalculator::GetScaledWordLengthProbabil
       if ((ScaledWordLengthProbabilityVector.at(WordLength) == std::numeric_limits<double>::infinity()) || std::isnan(ScaledWordLengthProbabilityVector.at(WordLength))) {
         ScaledWordLengthProbabilityVector.at(WordLength) = 0;
       }
-      std::cout << "s(" << WordLength << ")=" << WordLengthProbability(WordLength) << "/" << GeneratedLengthDistribution.at(WordLength) << "=" << ScaledWordLengthProbabilityVector.at(WordLength) << std::endl;
+      // std::cout << "s(" << WordLength << ")=" << WordLengthProbability(WordLength) << "/" << GeneratedLengthDistribution.at(WordLength) << "=" << ScaledWordLengthProbabilityVector.at(WordLength) << std::endl;
     }
     UpdateScaledWordLengthProbabilityVector = false;
   }
@@ -138,16 +138,16 @@ void WordLengthProbCalculator::UpdateWHPYLMBaseProbabilitiesScale(
     }
   }
 
-  int WordLength = 0;
+  // int WordLength = 0;
   for (double & WordLengthProbability : ObservedWordLengthProbabilities) {
     WordLengthProbability /= NumWords;
-    std::cout << std::setprecision(4) << std::fixed << "Word length: "
-              << WordLength++ << ", word length probability: "
-              << WordLengthProbability << std::endl;
+    // std::cout << std::setprecision(4) << std::fixed << "Word length: "
+    //           << WordLength++ << ", word length probability: "
+    //           << WordLengthProbability << std::endl;
   }
   MeanWordLength /= NumWords;
-  std::cout << "Mean word length: " << MeanWordLength << ", number of word: "
-            << NumWords << std::endl << std::endl;
+  std::cout << " Mean length of observed words at base of WHPYLM: " << MeanWordLength
+            << ", number of word: " << NumWords << std::endl << std::endl;
 
   if (WordLengthModulation > -1) {
     std::vector<double> GeneratedWordLengthProbabilities;

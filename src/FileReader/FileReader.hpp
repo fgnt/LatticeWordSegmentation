@@ -68,7 +68,7 @@
 /* class to read input files */
 class FileReader {
   // parameters
-  const ParameterStruct Params;
+  const ParameterStruct &Params;
 
   // a global string to int mapper which is updated with each reading process
   StringToIntMapper GlobalStringToInt;
@@ -157,12 +157,14 @@ class FileReader {
     LogVectorFst& LatticeFst, StateId State,
     const std::string& phone
   );
+  
+  LogVectorFst GetWordEndTransducer();
 
 public:
   /* constructor */
   // set some predefined symbols in string to int map and read data
   FileReader(
-    ParameterStruct Params
+    const ParameterStruct &Params
   );
 
   // return class for input file handling

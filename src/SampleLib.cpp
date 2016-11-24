@@ -67,15 +67,13 @@
 #include <fst/shortest-path.h>
 #include "SampleLib.hpp"
 #include <beam-search.h>
-// #include "DebugLib.hpp"
+#include "DebugLib.hpp"
 
 using std::vector;
 using std::string;
 using std::cout;
 using std::endl;
 using std::cerr;
-
-std::mutex SampleLib::mtx;
 
 void SampleLib::ComposeAndSampleFromInputLexiconAndLM(
   const fst::Fst< fst::LogArc > *InputFst,
@@ -84,19 +82,18 @@ void SampleLib::ComposeAndSampleFromInputLexiconAndLM(
   int SentEndWordId,
   fst::VectorFst< fst::LogArc > *SampledFst,
   std::vector< LatticeWordSegmentationTimer::SimpleTimer > *tInSample,
-  int beamWidth, bool UseViterby)
+  int beamWidth,
+  bool UseViterby
+)
 {
 //   std::cout << "Composing and Sampling: " << std::endl;
 
   // compose input with lexicon transducer
   (*tInSample)[0].SetStart();
   PM *PM11 = new PM(*InputFst, fst::MATCH_NONE);
-  mtx.lock();
   PM *PM21 = new PM(*LexiconTransducer, fst::MATCH_INPUT, PHI_SYMBOLID, false);
-  mtx.unlock();
   fst::ComposeFstOptions<fst::LogArc, PM> copts1(fst::CacheOptions(), PM11, PM21);
   fst::ComposeFst<fst::LogArc> Input_Unk_Lex(*InputFst, *LexiconTransducer, copts1);
-//   fst::ArcSortFst<fst::LogArc, fst::OLabelCompare<fst::LogArc> > Input_Unk_Lex_OSort(Input_Unk_Lex, fst::OLabelCompare<fst::LogArc>());
   (*tInSample)[0].AddTimeSinceStartToDuration();
 
   // instantiate language model fst
@@ -109,8 +106,8 @@ void SampleLib::ComposeAndSampleFromInputLexiconAndLM(
   PM *PM12 = new PM(Input_Unk_Lex, fst::MATCH_NONE);
   PM *PM22 = new PM(LanguageModelFST, fst::MATCH_INPUT, PHI_SYMBOLID, false);
   fst::ComposeFstOptions<fst::LogArc, PM> copts2(fst::CacheOptions(), PM12, PM22);
-  fst::ComposeFst<fst::LogArc> Input_Unk_Lex_LM(Input_Unk_Lex, LanguageModelFST, copts2);
-//   fst::ComposeFst<fst::LogArc> Input_Unk_Lex_LM(Input_Unk_Lex_OSort, LanguageModelFST, copts2);
+  fst::ComposeFst<fst::LogArc> Input_Unk_Lex_LM(
+      Input_Unk_Lex, LanguageModelFST, copts2);
   (*tInSample)[2].AddTimeSinceStartToDuration();
 
   // print input, lexicon, language model and composition results
@@ -126,17 +123,6 @@ void SampleLib::ComposeAndSampleFromInputLexiconAndLM(
   if (beamWidth > 0) {
     fst::BeamTrim(Input_Unk_Lex_LM, beamSearchFst, beamWidth);
   }
-
-//  int arcCnt = 0;
-//  for (fst::StateIterator<fst::ComposeFst<fst::LogArc> > siter(Input_Unk_Lex_LM); !siter.Done(); siter.Next()) {
-//    arcCnt += Input_Unk_Lex_LM.NumArcs(siter.Value());
-//  }
-//  std::cout << "No beam: " << arcCnt << " Arcs" << std::endl;
-//  arcCnt = 0;
-//  for (fst::StateIterator<fst::VectorFst<fst::LogArc> > siter(*beamSearchFst); !siter.Done(); siter.Next()) {
-//    arcCnt += beamSearchFst->NumArcs(siter.Value());
-//  }
-//  std::cout << "Beam: " << arcCnt << " Arcs" << std::endl;
 
   // sample segmentation
   (*tInSample)[3].SetStart();
@@ -154,20 +140,49 @@ void SampleLib::ComposeAndSampleFromInputLexiconAndLM(
       fst::Cast(fst::VectorFst<fst::LogArc>(Input_Unk_Lex_LM), &iStdFst);
     }
     fst::VectorFst<fst::StdArc> oStdFst;
-//     std::cout << "Start Shortest Path" << std::endl << std::flush;
     fst::ShortestPath(iStdFst, &oStdFst);
-//     std::cout << "End Shortest Path" << std::endl << std::flush;
     fst::Cast(oStdFst, SampledFst);
-//     std::cout << "End Cast" << std::endl << std::flush;
   }
   (*tInSample)[3].AddTimeSinceStartToDuration();
   delete beamSearchFst;
-//   std::cout << "Sampling done!" << std::endl;
+}
+
+void SampleLib::ComposeAndSampleFromInputAndAddCharLM(
+  const fst::Fst< fst::LogArc > *InputFst,
+  const NHPYLMFst *CharacterLanguageModelFST,
+  fst::VectorFst< fst::LogArc > *SampledFst,
+  const LogVectorFst *WordEndTransducer,
+  std::vector< LatticeWordSegmentationTimer::SimpleTimer > *tInSample
+)
+{
+  // compose input with language model
+  (*tInSample)[4].SetStart();
+  PM *PM12 = new PM(*InputFst, fst::MATCH_NONE);
+  PM *PM22 = new PM(*CharacterLanguageModelFST, fst::MATCH_INPUT, PHI_SYMBOLID, false);
+  fst::ComposeFstOptions<fst::LogArc, PM> copts2(fst::CacheOptions(), PM12, PM22);
+  fst::ComposeFst<fst::LogArc> Input_AddCharLM(*InputFst, *CharacterLanguageModelFST, copts2);
+
+  // find shortest path
+  fst::ArcMapFst<fst::LogArc, fst::StdArc, fst::LogToStdMapper> iStdFst(Input_AddCharLM, fst::LogToStdMapper());
+  fst::VectorFst<fst::StdArc> oStdFst;
+  fst::ShortestPath(iStdFst, &oStdFst);
+
+  // compose with word end transducer to reinsert word ends
+  fst::ArcMapFst<fst::StdArc, fst::LogArc, fst::RmWeightMapper<fst::StdArc, fst::LogArc>> RmWeightMapFst(oStdFst, fst::RmWeightMapper<fst::StdArc, fst::LogArc>());
+  fst::Compose(RmWeightMapFst, *WordEndTransducer, SampledFst);
+  (*tInSample)[4].AddTimeSinceStartToDuration();
+
+//   DebugLib::PrintFST("lattice_debug/RmWeightMap.fst", CharacterLanguageModel->GetId2CharacterSequenceVector(), fst::VectorFst<fst::LogArc>(RmWeightMapFst), true, NAMESANDIDS);
+//   DebugLib::PrintFST("lattice_debug/Sampled.fst", CharacterLanguageModel->GetId2CharacterSequenceVector(), *SampledFst, true, NAMESANDIDS);
+//   DebugLib::PrintFST("lattice_debug/Input_AddCharLM.fst", CharacterLanguageModel->GetId2CharacterSequenceVector(), fst::VectorFst<fst::LogArc>(Input_AddCharLM), true, NAMESANDIDS);
+//   DebugLib::PrintFST("lattice_debug/AddCharLM.fst", CharacterLanguageModel->GetId2CharacterSequenceVector(), fst::VectorFst<fst::LogArc>(CharacterLanguageModelFST), true, NAMESANDIDS);
+//   DebugLib::PrintFST("lattice_debug/Input.fst", CharacterLanguageModel->GetId2CharacterSequenceVector(), fst::VectorFst<fst::LogArc>(*InputFst), true, NAMESANDIDS);
 }
 
 vector< bool > SampleLib::GetActiveWordIdsInFst(
   const fst::Fst< fst::LogArc > &SegmentFST,
-  int MaxNumWords)
+  int MaxNumWords
+)
 {
 //   int NumActiveWords = 0;
 //   int NumKnownWords = LanguageModel.GetId2Word().size();
@@ -225,9 +240,11 @@ unsigned SampleLib::SampleWeights(vector< float > *ws)
 }
 
 // Copyright 2010, Graham Neubig, modified by Jahn Heymann (2013) and Oliver Walter (2014) //
-void SampleLib::SampGen(const fst::Fst< fst::LogArc > &ifst,
-                        fst::MutableFst< fst::LogArc > *ofst,
-                        unsigned int nbest)
+void SampleLib::SampGen(
+  const fst::Fst< fst::LogArc > &ifst,
+  fst::MutableFst< fst::LogArc > *ofst,
+  unsigned int nbest
+)
 {
   typedef fst::Fst<fst::LogArc> F;
   typedef typename F::Weight W;

@@ -63,7 +63,6 @@
 #include <random>
 #include "definitions.hpp"
 
-
 /*
  * class for one restaurant containing the different words
  */

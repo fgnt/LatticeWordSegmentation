@@ -59,22 +59,12 @@ ParameterParser::ParameterParser(int argc, const char **argv):
   // read the arguments
   int argPos = 1;
   for (; argPos < argc && argv[argPos][0] == '-'; argPos++) {
-    if (!strcmp(argv[argPos], "-burnin")) {
-      Parameters.NumBurnIn = atoi(argv[++argPos]);
-    } else if (!strcmp(argv[argPos], "-trimRate")) {
-      Parameters.TrimRate = atoi(argv[++argPos]);
-    } else if (!strcmp(argv[argPos], "-samps")) {
-      Parameters.NumSamples = atoi(argv[++argPos]);
-    } else if (!strcmp(argv[argPos], "-samprate")) {
-      Parameters.SampleRate = atoi(argv[++argPos]);
-    } else if (!strcmp(argv[argPos], "-sampInputRate")) {
-      Parameters.SampleInputRate = atoi(argv[++argPos]);
-    } else if (!strcmp(argv[argPos], "-decodeMethod")) {
-      Parameters.DecodeMethod = atoi(argv[++argPos]);
-    } else if (!strcmp(argv[argPos], "-KnownN")) {
+    if (!strcmp(argv[argPos], "-KnownN")) {
       Parameters.KnownN = atoi(argv[++argPos]);
     } else if (!strcmp(argv[argPos], "-UnkN")) {
       Parameters.UnkN = atoi(argv[++argPos]);
+    } else if (!strcmp(argv[argPos], "-AddCharN")) {
+      Parameters.AddCharN = atoi(argv[++argPos]);
     } else if (!strcmp(argv[argPos], "-NoThreads")) {
       Parameters.NoThreads = atoi(argv[++argPos]);
       if (Parameters.NoThreads == 0) {
@@ -101,37 +91,12 @@ ParameterParser::ParameterParser(int argc, const char **argv):
       Parameters.SymbolFile = argv[++argPos];
     } else if (!strcmp(argv[argPos], "-InputArcInfosFile")) {
       Parameters.InputArcInfosFile = argv[++argPos];
-    } else if (!strcmp(argv[argPos], "-prefix")) {
-      Parameters.Prefix = argv[++argPos];
-    } else if (!strcmp(argv[argPos], "-separator")) {
-      Parameters.Separator = argv[++argPos];
-    } else if (!strcmp(argv[argPos], "-errorRate")) {
-      Parameters.ErrorRate = atoi(argv[++argPos]) / 100.0;
     } else if (!strcmp(argv[argPos], "-AmScale")) {
       Parameters.AmScale = atof(argv[++argPos]);
-    } else if (!strcmp(argv[argPos], "-maxErrorProb")) {
-      Parameters.MaxErrorProb = atoi(argv[++argPos]) / 100.0;
     } else if (!strcmp(argv[argPos], "-Debug")) {
       Parameters.Debug = atoi(argv[++argPos]);
-    } else if (!strcmp(argv[argPos], "-drawFsts")) {
-      Parameters.DrawFsts = true;
     } else if (!strcmp(argv[argPos], "-WordLengthModulation")) {
       Parameters.WordLengthModulation = atof(argv[++argPos]);
-    } else if (!strcmp(argv[argPos], "-phoneAlt")) {
-      Parameters.PhoneAltFile = std::string(argv[++argPos]);
-    } else if (!strcmp(argv[argPos], "-dict")) {
-      Parameters.DictFile = std::string(argv[++argPos]);
-      Parameters.UseDictFile = true;
-    } else if (!strcmp(argv[argPos], "-sampleInputs")) {
-      Parameters.SampleInput = atoi(argv[++argPos]);
-    } else if (!strcmp(argv[argPos], "-sampleThreads")) {
-      Parameters.SampleThreads = atoi(argv[++argPos]);
-    } else if (!strcmp(argv[argPos], "-del")) {
-      Parameters.Deletions = true;
-    } else if (!strcmp(argv[argPos], "-altInit")) {
-      Parameters.AltInit = true;
-    } else if (!strcmp(argv[argPos], "-fullInit")) {
-      Parameters.FullInit = true;
     } else if (!strcmp(argv[argPos], "-LatticeFileType")) {
       ++argPos;
       if (!strcmp("cmu", argv[argPos])) {
@@ -147,39 +112,25 @@ ParameterParser::ParameterParser(int argc, const char **argv):
       }
     } else if (!strcmp(argv[argPos], "-EvalInterval")) {
       Parameters.EvalInterval =  atoi(argv[++argPos]);
-    } else if (!strcmp(argv[argPos], "-errCorrection")) {
-      Parameters.ErrCorrection = true;
-      Parameters.ErrStart = atoi(argv[++argPos]);
-    } else if (!strcmp(argv[argPos], "-repProb")) {
-      Parameters.RepProb = atoi(argv[++argPos]) / 100.0;
-    } else if (!strcmp(argv[argPos], "-insCnt")) {
-      Parameters.InsCnt = atoi(argv[++argPos]);
     } else if (!strcmp(argv[argPos], "-UseViterby")) {
       Parameters.UseViterby = atoi(argv[++argPos]);
     } else if (!strcmp(argv[argPos], "-ExportLattices")) {
       Parameters.ExportLattices = true;
       Parameters.ExportLatticesDirectoryName = argv[++argPos];
-    } else if (!strcmp(argv[argPos], "-altLM")) {
-      Parameters.AltLM = true;
+    } else if (!strcmp(argv[argPos], "-WriteRescoredLattices")) {
+      Parameters.WriteRescoredLattices = true;
+      Parameters.RescoredLatticesDirectoryName = argv[++argPos];
     } else if (!strcmp(argv[argPos], "-SwitchIter")) {
       Parameters.SwitchIter = atoi(argv[++argPos]);
       Parameters.NewKnownN = atoi(argv[++argPos]);
       Parameters.NewUnkN = atoi(argv[++argPos]);
+      Parameters.NewAddCharN = atoi(argv[++argPos]);
       Parameters.NewLMNumIters = atoi(argv[++argPos]);
     } else if (!strcmp(argv[argPos], "-DeactivateCharacterModel")) {
       Parameters.DeactivateCharacterModel = atoi(argv[++argPos]);
     } else if (!strcmp(argv[argPos], "-InitLM")) {
       Parameters.InitLM = true;
       Parameters.InitTranscription = std::string(argv[++argPos]);
-    } else if (!strcmp(argv[argPos], "-mlf")) {
-      Parameters.MLFFileName = std::string(argv[++argPos]);
-      Parameters.UseMlf = true;
-    } else if (!strcmp(argv[argPos], "-save")) {
-      Parameters.Save = true;
-    } else if (!strcmp(argv[argPos], "-addAll")) {
-      Parameters.AddAll = true;
-    } else if (!strcmp(argv[argPos], "-copyLex")) {
-      Parameters.CopyLex = true;
     } else if (!strcmp(argv[argPos], "-OutputEditOperations")) {
       Parameters.OutputEditOperations = true;
     } else if (!strcmp(argv[argPos], "-NumIter")) {
@@ -233,6 +184,17 @@ ParameterParser::ParameterParser(int argc, const char **argv):
     DieOnHelp(err.str());
   }
 
+  // Terminate if rescored lattices should be written without an additional
+  // Char LM
+  if(Parameters.WriteRescoredLattices && (Parameters.AddCharN < 1)) {
+    std::ostringstream err;
+    err << "Illegal option: Rescoring the lattices requires"
+        << " an additional Char LM, but (AddCharN = "
+        << Parameters.AddCharN
+        << "!";
+    DieOnHelp(err.str());
+  }
+
   // load the input files, either from the list or from the parameters
   if (!Parameters.InputFilesList.empty()) {
     ReadFilesFromFileList(Parameters.InputFilesList);
@@ -252,6 +214,7 @@ void ParameterParser::DieOnHelp(const std::string& err) const
             << " Options:" << std::endl
             << "  -KnownN:               The n-gram length of the word language model (-KnownN N (1))" << std::endl
             << "  -UnkN:                 The n-gram length of the character language model (-UnkN N (1))" << std::endl
+            << "  -AddCharN:             The n-gram length of the additional character language model. 0: off, >0: n-gram lenth (Paramter: -AddCharN N (0))" << std::endl
             << "  -NoThreads:            The number of threads used for sampling (-NoThreads N (1))" << std::endl
             << "  -PruneFactor:          Prune paths in the input that have a PruneFactor times higher score" << std::endl
             << "                         than the lowest scoring path (-PruneFactor X (inf))" << std::endl
@@ -267,6 +230,8 @@ void ParameterParser::DieOnHelp(const std::string& err) const
             << "  -Debug:                Set debug level (-Debug N (0))" << std::endl
             << "  -LatticeFileType:      Format of lattice files (-LatticeFileType [cmu|htk|openfst] (text))" << std::endl
             << "  -ExportLattices:       Export the input lattices to openfst format (-ExportLattices ExportLatticesDirectoryName)" << std::endl
+            << "  -WriteRescoredLattices:   Export the input lattices rescored with the character LM to openfst format (-WriteRescoredLattices RescoredLatticesDirectoryName)."
+            <<                              "This requires that parameter AddCharLM>0:" << std::endl
             << "  -NumIter:              Maximum number of iterations (-NumIter N (0))" << std::endl
             << "  -OutputDirectoryBasename: The basename for result outpt Directory" << std::endl
             << "                            (-OutputDirectoryBasename OutputDirectoryBasename ())" << std::endl
@@ -279,7 +244,7 @@ void ParameterParser::DieOnHelp(const std::string& err) const
             << "  -CalculatePER:         Calculate phoneme error rate (-CalculatePER (false))"  << std::endl
             << "  -CalculateWER:         Calculate word error rate (-CalculateWER (false))"  << std::endl
             << "  -SwitchIter:           iteration before which the language model orders are switched"  << std::endl
-            << "                         (-SwitchIter SwitchIterIdx NewKnownN NewUnkN NewLMNumIters (0 1 1 0))"  << std::endl
+            << "                         (-SwitchIter SwitchIterIdx NewKnownN NewUnkN NewAddCharN NewLMNumIters (0 1 1 0 0))"  << std::endl
             << "  -AmScale:              acoustic model scaling factor (-AmScale AcousticModelScalingFactor (1))"  << std::endl
             << "  -InitLM:               initialize language model from initialization fsts"  << std::endl
             << "                         (-InitLM InitTranscriptionFilename ())"  << std::endl
@@ -300,7 +265,7 @@ void ParameterParser::DieOnHelp(const std::string& err) const
             << "                             0: off, >0 number of iteration (Parameter: -DeactivateCharacterModel NumIter)" << std::endl
             << "  -HTKLMScale:           Language model scaling factor when reading HTK lattices (Parameter: -HTKLMScale K (0))" << std::endl
             << "  -ReadNodeTimes;        Read node timing informations from HTK lattice" << std::endl
-            << "  -WordData:             Use init transciptions and a pronounciation dictionary for initialization."
+            << "  -WordData:             Use init transciptions and a pronounciation dictionary for initialization." // TODO: Thoams - Add parameter decription
             << "This needs SentenceFile and PronDictFile as additional inputs." << std::endl;
 
   if(!err.empty()){
@@ -352,64 +317,34 @@ const ParameterStruct &ParameterParser::GetParameters() const
 
 
 ParameterStruct::ParameterStruct() :
-  NumBurnIn(0),
-  TrimRate(0),
-  NumSamples(0),
-  SampleRate(0),
-  SampleInputRate(0),
-  DecodeMethod(0),
   KnownN(1),
   UnkN(1),
+  AddCharN(0),
   NoThreads(1),
   PruneFactor(std::numeric_limits<double>::infinity()),
   InputFilesList(),
   InputType(INPUT_TEXT),
   SymbolFile(),
   InputArcInfosFile(),
-  Prefix(),
-  Separator(),
-  ErrorRate(0),
   AmScale(1),
-  MaxErrorProb(0),
   Debug(0),
-  DrawFsts(false),
-  MaxLen(0),
-  PhoneAltFile(),
   DictFile(),
   UseDictFile(false),
-  SampleInput(0),
-  SampleThreads(0),
-  Deletions(false),
-  AltInit(false),
-  FullInit(false),
   LatticeFileType(TEXT),
-  DictConstraint(0),
-  ErrCorrection(false),
-  ErrStart(0),
-  RepProb(0),
-  InsCnt(0),
-  CacheLattice(false),
   ExportLattices(false),
-  AltLM(false),
+  WriteRescoredLattices(false),
   SwitchIter(0),
   NewKnownN(1),
   NewUnkN(1),
+  NewAddCharN(0),
   NewLMNumIters(0),
-  NewAltLMN(0),
-  NewAmScale(0),
-  AltN(0),
   InitLM(false),
   InitTranscription(),
   InitLmNumIterations(0),
-  MLFFileName(),
-  UseMlf(false),
-  Save(false),
-  AddAll(false),
-  CopyLex(false),
-  Connect(false),
   InputFiles(),
   NumIter(0),
   ExportLatticesDirectoryName(),
+  RescoredLatticesDirectoryName(),
   OutputDirectoryBasename(),
   OutputFilesBasename(),
   ReferenceTranscription(),

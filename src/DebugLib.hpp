@@ -168,6 +168,12 @@ public:
     const NHPYLM& LanguageModel,
     int SentEndWordId
   );
+
+  static string BuildFilename(
+    string Basepath,
+    string InFilepath,
+    string suffix
+  );
 };
 
 #endif

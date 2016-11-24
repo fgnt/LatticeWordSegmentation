@@ -43,17 +43,20 @@
 // ----------------------------------------------------------------------------
 #include "FileData.hpp"
 
-FileData::FileData(StringToIntMapper GlobalStringToInt,
-                   StringToIntMapper InitStringToInt,
-                   std::vector<LogVectorFst> InitFsts,
-                   std::vector<std::string> InitFileNames,
-                   StringToIntMapper InputStringToInt,
-                   std::vector<LogVectorFst> InputFsts,
-                   std::vector<std::string> InputFileNames,
-                   std::vector<ArcInfo> InputArcInfos,
-                   StringToIntMapper ReferenceStringToInt,
-                   std::vector<LogVectorFst> ReferenceFsts,
-                   std::vector<std::string> ReferenceFileNames):
+FileData::FileData(
+  StringToIntMapper GlobalStringToInt,
+  StringToIntMapper InitStringToInt,
+  std::vector<LogVectorFst> InitFsts,
+  std::vector<std::string> InitFileNames,
+  StringToIntMapper InputStringToInt,
+  std::vector<LogVectorFst> InputFsts,
+  std::vector<std::string> InputFileNames,
+  std::vector<ArcInfo> InputArcInfos,
+  StringToIntMapper ReferenceStringToInt,
+  std::vector<LogVectorFst> ReferenceFsts,
+  std::vector<std::string> ReferenceFileNames,
+  LogVectorFst WordEndTransducer
+) :
   GlobalStringToInt(GlobalStringToInt),
   InitStringToInt(InitStringToInt),
   InitFsts(InitFsts),
@@ -64,11 +67,12 @@ FileData::FileData(StringToIntMapper GlobalStringToInt,
   InputArcInfos(InputArcInfos),
   ReferenceStringToInt(ReferenceStringToInt),
   ReferenceFsts(ReferenceFsts),
-  ReferenceFileNames(ReferenceFileNames)
+  ReferenceFileNames(ReferenceFileNames),
+  WordEndTransducer(WordEndTransducer)
 {
 }
 
-FileData::FileData(const FileData& lhs):
+FileData::FileData(const FileData& lhs) :
   GlobalStringToInt(lhs.GlobalStringToInt),
   InitStringToInt(lhs.InitStringToInt),
   InitFsts(lhs.InitFsts),
@@ -79,7 +83,8 @@ FileData::FileData(const FileData& lhs):
   InputArcInfos(lhs.InputArcInfos),
   ReferenceStringToInt(lhs.ReferenceStringToInt),
   ReferenceFsts(lhs.ReferenceFsts),
-  ReferenceFileNames(lhs.ReferenceFileNames)
+  ReferenceFileNames(lhs.ReferenceFileNames),
+  WordEndTransducer(lhs.WordEndTransducer)
 {
 }
 
@@ -140,4 +145,10 @@ const std::vector<std::string> &FileData::GetInitFileNames() const
 const std::vector<ArcInfo> &FileData::GetInputArcInfos() const
 {
   return InputArcInfos;
+}
+
+
+const LogVectorFst &FileData::GetWordEndTransducer() const
+{
+  return WordEndTransducer;
 }

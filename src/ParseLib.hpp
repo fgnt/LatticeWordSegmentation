@@ -149,6 +149,22 @@ public:
     std::vector< ArcInfo >* TimedSentence = nullptr,
     const std::vector< ArcInfo >& InputArcInfos = std::vector<ArcInfo>()
   );
+  
+  // add word sequence to additional character language model
+  static void AddWordSequenceToAddCharLM(
+    const const_witerator& Word,
+    int NumWords,
+    const Dictionary& LanguageModel,
+    NHPYLM* CharacterLanguageModel
+  );
+
+  // remove word sequence from additional character language model
+  static void RemoveWordSequenceFromAddCharLM(
+    const const_witerator& Word,
+    int NumWords,
+    const Dictionary& LanguageModel,
+    NHPYLM* CharacterLanguageModel
+  );
 };
 
 #endif

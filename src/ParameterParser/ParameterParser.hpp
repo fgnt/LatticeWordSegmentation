@@ -64,64 +64,34 @@
 
 /* Struct holding values of input parameters */
 struct ParameterStruct {
-  unsigned int NumBurnIn;
-  unsigned int TrimRate;
-  unsigned int NumSamples;
-  unsigned int SampleRate;
-  unsigned int SampleInputRate;
-  unsigned int DecodeMethod;
   unsigned int KnownN;                 // order of word hierarchical language model (Parameter: -KnownN N (1))
   unsigned int UnkN;                   // order of character hierarchical language model (Parameter: -UnkN N (1))
+  unsigned int AddCharN;               // order of additional character language model. 0: off, >0: Order (Paramter: -AddCharN N (0))
   unsigned int NoThreads;              // number of threads used for sampling (Parameter: -NoThreads N (1))
   double PruneFactor;                  // prune paths that have an PruneFactor times higher score that the lowest scoring path (Parameter: -PruneFactor X (inf))
   std::string InputFilesList;          // Filelist for input files (Parameter: -InputFilesList InputFileListName ())
   InputTypes InputType;                // type of input (Parameter: -InputType [text|fst] (text))
   std::string SymbolFile;              // symbolfile if reading from openfst lattices (Parameter: -SymbolFile SymbolfileName ())
   std::string InputArcInfosFile;       // arc infos file if reading from openfst lattices where input id points to label, start, end infos (Parameter: -InputArcInfosFile InputArcInfosFile ())
-  std::string Prefix;
-  std::string Separator;
-  float ErrorRate;
   double AmScale;                      // acoustic model scaling factor (Parameter: -AmScale AcousticModelScalingDactor (1))
-  float MaxErrorProb;
   unsigned int Debug;                  // configure debugging (Parameter: -Debug N (0))
-  bool DrawFsts;
-  unsigned int MaxLen;
-  std::string PhoneAltFile;
-  std::string DictFile;
-  bool UseDictFile;
-  unsigned int SampleInput;
-  unsigned int SampleThreads;
-  bool Deletions;
-  bool AltInit;
-  bool FullInit;
+  std::string DictFile;                // TODO: Thomas
+  bool UseDictFile;                    // TODO: Thomas
   LatticeFileTypes LatticeFileType;    // format of lattice files (Parameter: -LatticeFileType [cmu|htk|opefst] (text))
-  unsigned int DictConstraint;
-  bool ErrCorrection;
-  unsigned int ErrStart;
-  double RepProb;
-  unsigned int InsCnt;
-  bool CacheLattice;
   bool ExportLattices;                 // specify weather lattices should be exported to openfst format (Parameter: -ExportLattices ExportLatticesDirectoryName)
-  bool AltLM;
-  unsigned int SwitchIter;             // iteration before which the language model orders are switched (Parameter: -SwitchIter SwitchIterIdx NewKnownN NewUnkN NewLMNumIters (0 1 1 0))
+  bool WriteRescoredLattices = true;   // specify whether the lattices rescored with the additional character LM shall be written on disk. Requires AddCharN > 0.
+  unsigned int SwitchIter;             // iteration before which the language model orders are switched (Parameter: -SwitchIter SwitchIterIdx NewKnownN NewUnkN NewAddCharN NewLMNumIters (0 1 1 0 0))
   unsigned int NewKnownN;              // new word language model order
   unsigned int NewUnkN;                // new character language model order
+  unsigned int NewAddCharN;            // new additional character language model order
   unsigned int NewLMNumIters;          // number of iteration for language model retraining after switching
-  unsigned int NewAltLMN;
-  double NewAmScale;
-  unsigned int AltN;
   bool InitLM;                         // initialize language model from initialization fsts (Parameter: -InitLM InitTranscriptionFilename ())
   std::string InitTranscription;       // File containing the transcriptions used for initialization
   int InitLmNumIterations;             // Number of iterations for language model initialization (Parameter: -InitLmNumIterations NumIterations (0))
-  std::string MLFFileName;
-  bool UseMlf;
-  bool Save;
-  bool AddAll;
-  bool CopyLex;
-  bool Connect;
   std::vector<std::string> InputFiles; // actual list of files to read from (either read from command line argumants or InputFilesList ())
   unsigned int NumIter;                // maximum number of iterations (Parameter: -NumIter N (0))
   std::string ExportLatticesDirectoryName;     // name for lattice export directory (Parameter: -ExportLattices ExportLatticesDirectoryName)
+  std::string RescoredLatticesDirectoryName;   // name for rescored lattice export directory (Parameter: -WriteRescoredLattices RescoredLatticesDirectoryName)
   std::string OutputDirectoryBasename; // basename for result outpt directory (Parameter: -OutputDirectoryBasename OutputDirectoryBasename ())
   std::string OutputFilesBasename;     // basename for result outpt files (Parameter: -OutputFilesBasename OutputFilesBasename ())
   std::string ReferenceTranscription;  // File containing the reference transcriptions (Parameter: -ReferenceTranscription ReferenceTranscriptionFilename ())

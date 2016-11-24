@@ -69,15 +69,15 @@
 #define EPS_SYMBOL         "<eps>"
 #define EPS_SYMBOLID       0
 #define PHI_SYMBOL         "<phi>"
-#define PHI_SYMBOLID       1
+#define PHI_SYMBOLID       static_cast<int>(PHI)
 #define UNKBEGIN_SYMBOL    "<unk>"
-#define UNKBEGIN_SYMBOLID  2
+#define UNKBEGIN_SYMBOLID  static_cast<int>(SOW)
 #define UNKEND_SYMBOL      "</unk>"
-#define UNKEND_SYMBOLID    3
+#define UNKEND_SYMBOLID    static_cast<int>(EOW)
 #define SENTSTART_SYMBOL   "<s>"
-#define SENTSTART_SYMBOLID 4
+#define SENTSTART_SYMBOLID static_cast<int>(SOS)
 #define SENTEND_SYMBOL     "</s>"
-#define SENTEND_SYMBOLID   5
+#define SENTEND_SYMBOLID   static_cast<int>(EOS)
 #define CHARACTERSBEGIN    6
 
 static const std::string PHONE_PREFIX("");

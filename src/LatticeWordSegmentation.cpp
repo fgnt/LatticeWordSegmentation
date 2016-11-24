@@ -42,10 +42,12 @@
 */
 // ----------------------------------------------------------------------------
 
+#include <iostream>
 #include <iomanip>
 #include <numeric>
 #include <chrono>
 #include <fst/compose.h>
+#include <fst/arcsort.h>
 #include "LatticeWordSegmentation.hpp"
 #include "SampleLib.hpp"
 #include "ParseLib.hpp"
@@ -65,13 +67,15 @@ std::default_random_engine LatticeWordSegmentation::RandomGenerator(
 );
 
 
-LatticeWordSegmentation::LatticeWordSegmentation(const ParameterStruct& Params,
-                                                 const FileData& InputFileData) :
+LatticeWordSegmentation::LatticeWordSegmentation(
+  const ParameterStruct& Params,
+  const FileData& InputFileData
+) :
   Params(Params),
   InputFileData(InputFileData),
   MaxNumThreads(Params.NoThreads),
   Threads(MaxNumThreads - 1),
-  Timer(MaxNumThreads, 4)
+  Timer(MaxNumThreads, Params.AddCharN > 0 ? 5 : 4)
 {
 }
 
@@ -98,7 +102,7 @@ void LatticeWordSegmentation::DoWordSegmentation()
   // initialize empty language model and dictionary and perform
   // language model initialization from initialization sentences
   // (parse reference fsts, add to language model and retrain)
-  InitializeLanguageModel(Params.UnkN, Params.KnownN);
+  InitializeLanguageModel(Params.UnkN, Params.KnownN, Params.AddCharN);
 
   // initialize output vector for sampled sentences and fsts
   NumSampledSentences = InputFileData.GetInputFsts().size();
@@ -108,9 +112,6 @@ void LatticeWordSegmentation::DoWordSegmentation()
   );
   TimedSampledSentences.resize(NumSampledSentences);
   SampledFsts.resize(NumSampledSentences);
-
-  //Create Evaluate object to perform measurements
-  Evaluate Eval(Params, InputFileData, Timer, LanguageModel);
 
   // create index vector of shuffled sentence indices
   std::vector<int> ShuffledIndices(NumSampledSentences);
@@ -122,8 +123,11 @@ void LatticeWordSegmentation::DoWordSegmentation()
               << " of " << Params.NumIter << std::endl;
 
     // shuffle sentence indices for each iteration
-    std::shuffle(ShuffledIndices.begin(), ShuffledIndices.end(),
-                 RandomGenerator);
+    std::shuffle(
+      ShuffledIndices.begin(),
+      ShuffledIndices.end(),
+      RandomGenerator
+    );
 
     // initialize lexicon transducer
     Timer.tLexFst.SetStart();
@@ -138,16 +142,21 @@ void LatticeWordSegmentation::DoWordSegmentation()
 
     // iterate over every sentence
     DoWordSegmentationSentenceIterations(
-      ShuffledIndices, &LexiconTransducer, IdxIter);
+      ShuffledIndices, &LexiconTransducer, IdxIter
+    );
 
     // calculate and update word length statistics
     WordLengthProbCalculator::UpdateWHPYLMBaseProbabilitiesScale(
       LanguageModel,
-      Params.WordLengthModulation);
+      Params.WordLengthModulation
+    );
 
     // resample hyperparameters of language model
     Timer.tHypSample.SetStart();
     LanguageModel->ResampleHyperParameters();
+    if (CharacterLanguageModel != nullptr) {
+      CharacterLanguageModel->ResampleHyperParameters();
+    }
     Timer.tHypSample.AddTimeSinceStartToDuration();
 
     // set discount and concentration to zero for unigram word model
@@ -159,17 +168,35 @@ void LatticeWordSegmentation::DoWordSegmentation()
     }
 
     // Evaluation of current iteration
+    Evaluate Eval(
+      Params,
+      InputFileData,
+      Timer,
+      LanguageModel,
+      CharacterLanguageModel
+    );
     Eval.WriteSentencesToOutputFiles(
-          SampledSentences, TimedSampledSentences, IdxIter);
+      SampledSentences, TimedSampledSentences, IdxIter
+    );
     Eval.OutputMeasureStatistics(SampledSentences, SampledFsts, IdxIter);
 
     // switch language model order, if specified
     if ((IdxIter + 1) == Params.SwitchIter) {
-      SwitchLanguageModelOrders(Params.NewUnkN, Params.NewKnownN);
+      SwitchLanguageModelOrders(
+        Params.NewUnkN,
+        Params.NewKnownN,
+        Params.NewAddCharN
+      );
     }
   }
+
+  if (Params.WriteRescoredLattices) {
+    WriteRescoredLattices();
+  }
+
   // cleanup
   delete LanguageModel;
+  delete CharacterLanguageModel;
 }
 
 void LatticeWordSegmentation::DoWordSegmentationSentenceIterations(
@@ -181,15 +208,23 @@ void LatticeWordSegmentation::DoWordSegmentationSentenceIterations(
   for (std::size_t IdxSentence = 0; IdxSentence < NumSampledSentences;
        IdxSentence += MaxNumThreads) {
     std::size_t NumThreads =
-        std::min(MaxNumThreads, NumSampledSentences - IdxSentence);
+      std::min(MaxNumThreads, NumSampledSentences - IdxSentence);
 
-    std::cout << "\r   Sentence: " << IdxSentence + 1
+    std::cerr << "\r   Sentence: " << IdxSentence + 1
               << " of " << NumSampledSentences;
 
     // remove words from lexicon, fst and lm
     Timer.tRemove.SetStart();
     for (std::size_t IdxThread = 0; IdxThread < NumThreads; ++IdxThread) {
       std::size_t CurrentIndex = ShuffledIndices[IdxSentence + IdxThread];
+      if (CharacterLanguageModel != nullptr) {
+        ParseLib::RemoveWordSequenceFromAddCharLM(
+          SampledSentences.at(CurrentIndex).begin() + WHPYLMContextLength,
+          SampledSentences.at(CurrentIndex).size() - WHPYLMContextLength,
+          *LanguageModel,
+          CharacterLanguageModel
+        );
+      }
       ParseLib::RemoveWordsFromDictionaryLexFSTAndLM(
         SampledSentences.at(CurrentIndex).begin() + WHPYLMContextLength,
         SampledSentences.at(CurrentIndex).size() - WHPYLMContextLength,
@@ -207,23 +242,47 @@ void LatticeWordSegmentation::DoWordSegmentationSentenceIterations(
     bool UseViterby =
       (Params.UseViterby > 0) && ((IdxIter + 1) >= Params.UseViterby);
 
-    auto SampleFn = [&](std::size_t IdxSentence, std::size_t IdxThread){
+    std::unique_ptr<NHPYLMFst> CharacterLanguageModelFST;
+    if (CharacterLanguageModel != nullptr) {
+      CharacterLanguageModelFST = std::unique_ptr<NHPYLMFst>(new NHPYLMFst(
+          *CharacterLanguageModel, EOW, std::vector<bool>(), true, AvailChars));
+    }
+
+    auto SampleFn = [&](std::size_t IdxSentence, std::size_t IdxThread) {
       std::size_t CurrentIndex = ShuffledIndices[IdxSentence + IdxThread];
+      LogVectorFst const *InputFst;
+      std::unique_ptr<LogVectorFst> CharFst;
+
+      if (CharacterLanguageModel != nullptr) {
+        CharFst = std::unique_ptr<LogVectorFst>(new LogVectorFst);
+        SampleLib::ComposeAndSampleFromInputAndAddCharLM(
+          &InputFileData.GetInputFsts().at(CurrentIndex),
+          CharacterLanguageModelFST.get(),
+          CharFst.get(),
+          &InputFileData.GetWordEndTransducer(),
+          &Timer.tInSamples[IdxThread]
+        );
+        InputFst = CharFst.get();
+      } else {
+        InputFst = &InputFileData.GetInputFsts().at(CurrentIndex);
+      }
+
       SampleLib::ComposeAndSampleFromInputLexiconAndLM(
-                    &InputFileData.GetInputFsts().at(CurrentIndex),
-                    LexiconTransducer,
-                    LanguageModel,
-                    SentEndWordId,
-                    &SampledFsts[CurrentIndex],
-                    &Timer.tInSamples[IdxThread],
-                    Params.BeamWidth,
-                    UseViterby);
+        InputFst,
+        LexiconTransducer,
+        LanguageModel,
+        SentEndWordId,
+        &SampledFsts[CurrentIndex],
+        &Timer.tInSamples[IdxThread],
+        Params.BeamWidth,
+        UseViterby
+      );
     };
 
     for (std::size_t IdxThread = 0; IdxThread < (NumThreads - 1); ++IdxThread) {
       Threads[IdxThread] = std::thread(SampleFn, IdxSentence, IdxThread);
     }
-    SampleFn(IdxSentence, NumThreads-1);
+    SampleFn(IdxSentence, NumThreads - 1);
 
     // join threads
     for (std::size_t IdxThread = 0; IdxThread < (NumThreads - 1); ++IdxThread) {
@@ -235,16 +294,25 @@ void LatticeWordSegmentation::DoWordSegmentationSentenceIterations(
     // parse and add sample
     Timer.tParseAndAdd.SetStart();
     for (std::size_t IdxThread = 0; IdxThread < NumThreads; ++IdxThread) {
-//       std::cout << SampledFsts[ShuffledIndices[IdxSentence + IdxThread]].NumStates() << " States" << std::endl << std::flush;
+      std::size_t CurrentIndex = ShuffledIndices[IdxSentence + IdxThread];
+//       std::cout << SampledFsts[CurrentIndex].NumStates() << " States" << std::endl << std::flush;
       ParseLib::ParseSampleAndAddCharacterIdSequenceToDictionaryLexFstAndLM(
-        SampledFsts[ShuffledIndices[IdxSentence + IdxThread]],
+        SampledFsts[CurrentIndex],
         SentEndWordId,
         LanguageModel,
         LexiconTransducer,
-        &SampledSentences[ShuffledIndices[IdxSentence + IdxThread]],
-        &TimedSampledSentences[ShuffledIndices[IdxSentence + IdxThread]],
+        &SampledSentences[CurrentIndex],
+        &TimedSampledSentences[CurrentIndex],
         InputFileData.GetInputArcInfos()
       );
+      if (CharacterLanguageModel != nullptr) {
+        ParseLib::AddWordSequenceToAddCharLM(
+          SampledSentences.at(CurrentIndex).begin() + WHPYLMContextLength,
+          SampledSentences.at(CurrentIndex).size() - WHPYLMContextLength,
+          *LanguageModel,
+          CharacterLanguageModel
+        );
+      }
     }
     Timer.tParseAndAdd.AddTimeSinceStartToDuration();
 //     std::cout << "End parse sample and add charactrer id sequence to dictionary" << std::endl << std::flush;
@@ -262,16 +330,25 @@ void LatticeWordSegmentation::DoWordSegmentationSentenceIterations(
 
 void LatticeWordSegmentation::SwitchLanguageModelOrders(
   int NewUnkN,
-  int NewKnownN
+  int NewKnownN,
+  int NewAddCharN
 )
 {
   std::cout << " Switching to KnownN=" << NewKnownN
-            << ", UnkN=" << NewUnkN << std::endl;
+            << ", UnkN=" << NewUnkN;
+  if (NewAddCharN > 0) {
+    std::cout << ", AddCharN=" << NewAddCharN;
+  }
+  std::cout << std::endl;
 
-  // instantiate new language model and initialize
+  // save previous language model and delete additional character language model
+  delete CharacterLanguageModel;
+  CharacterLanguageModel = nullptr;
   NHPYLM *OldLanguageModel = LanguageModel;
   std::size_t OldWHPYLMContextLength = WHPYLMContextLength;
-  InitializeLanguageModel(NewUnkN, NewKnownN);
+
+  // instantiate new language model and initialize
+  InitializeLanguageModel(NewUnkN, NewKnownN, NewAddCharN);
 
   // parse words in sampled sentences and add to new dictionary
   // and language model. Also update sentences with new word ids
@@ -290,7 +367,16 @@ void LatticeWordSegmentation::SwitchLanguageModelOrders(
       );
     }
     Sentence = TempSampledSentence;
-    LanguageModel->AddWordSequenceToLm(TempSampledSentence);
+
+    LanguageModel->AddWordSequenceToLm(Sentence);
+    if (CharacterLanguageModel != nullptr) {
+      ParseLib::AddWordSequenceToAddCharLM(
+        Sentence.begin() + WHPYLMContextLength,
+        Sentence.size() - WHPYLMContextLength,
+        *LanguageModel,
+        CharacterLanguageModel
+      );
+    }
   }
 
   // retrain language model for some iterations
@@ -299,7 +385,8 @@ void LatticeWordSegmentation::SwitchLanguageModelOrders(
   // calculate and update word length statistics
   WordLengthProbCalculator::UpdateWHPYLMBaseProbabilitiesScale(
     LanguageModel,
-    Params.WordLengthModulation);
+    Params.WordLengthModulation
+  );
 
   // resample hyperparameters of language model
   LanguageModel->ResampleHyperParameters();
@@ -308,23 +395,43 @@ void LatticeWordSegmentation::SwitchLanguageModelOrders(
   delete OldLanguageModel;
 }
 
-void LatticeWordSegmentation::InitializeLanguageModel(int UnkN, int KnownN)
+void LatticeWordSegmentation::InitializeLanguageModel(
+  int UnkN,
+  int KnownN,
+  int AddCharN
+)
 {
   std::cout << " Initializing empty language model with KnownN="
-            << KnownN << ", UnkN=" << UnkN << "!"
-            << std::endl << std::endl;
+            << KnownN << ", UnkN=" << UnkN;
+  if (AddCharN > 0) {
+    std::cout << ", AddCharN=" << AddCharN;
+  }
+  std::cout << "!" << std::endl << std::endl;
 
   LanguageModel = new NHPYLM(UnkN, KnownN,
-                             InputFileData.GetInputIntToStringVector(),
-                             CHARACTERSBEGIN);
+      InputFileData.GetInputIntToStringVector(), CHARACTERSBEGIN);
+
+  AvailChars.resize(
+    InputFileData.GetInputIntToStringVector().size() - SENTEND_SYMBOLID);
+
+  std::iota(AvailChars.begin(), AvailChars.end(), SENTEND_SYMBOLID);
 
   LanguageModel->AddCharacterIdSequenceToDictionary(
-    std::vector<int>(1, SENTEND_SYMBOLID).begin(), 1);
+      std::vector<int>(1, SENTEND_SYMBOLID).begin(), 1);
 
   SentEndWordId = LanguageModel->GetWordId(
-                    std::vector<int>(1, SENTEND_SYMBOLID).begin(), 1);
+      std::vector<int>(1, SENTEND_SYMBOLID).begin(), 1);
 
   WHPYLMContextLength = LanguageModel->GetWHPYLMOrder() - 1;
+
+  CharacterLanguageModel = nullptr;
+  if (AddCharN > 0) {
+    auto NumCharacters = InputFileData.GetInputIntToStringVector().size()
+                         - CHARACTERSBEGIN;
+    CharacterLanguageModel = new NHPYLM(0, AddCharN,
+        InputFileData.GetInputIntToStringVector(), CHARACTERSBEGIN,
+        1.0/(NumCharacters + 2));
+  }
 
   if (Params.InitLM) {
     ParseInitializationSentencesAndInitializeLanguageModel();
@@ -344,7 +451,7 @@ ParseInitializationSentencesAndInitializeLanguageModel()
   InitializationSentences.resize(NumInitializationSentences);
   std::size_t IdxInitFst = 0;
   for (const LogVectorFst &InitializationFst : InputFileData.GetInitFsts()) {
-    std::cout << "\r  Sentence: " << IdxInitFst + 1
+    std::cerr << "\r  Sentence: " << IdxInitFst + 1
               << " of " << NumInitializationSentences;
 
     auto& InitializationSentence = InitializationSentences.at(IdxInitFst);
@@ -358,9 +465,18 @@ ParseInitializationSentencesAndInitializeLanguageModel()
     // insert enough sentence end words at the beginning to fill out the
     // LM context size
     InitializationSentence.insert(InitializationSentence.begin(),
-                        WHPYLMContextLength, SentEndWordId);
+        WHPYLMContextLength, SentEndWordId);
 
     LanguageModel->AddWordSequenceToLm(InitializationSentence);
+    if (CharacterLanguageModel != nullptr) {
+      ParseLib::AddWordSequenceToAddCharLM(
+        InitializationSentence.begin() + WHPYLMContextLength,
+        InitializationSentence.size() - WHPYLMContextLength,
+        *LanguageModel,
+        CharacterLanguageModel
+      );
+    }
+
     IdxInitFst++;
   }
   std::cout << std::endl << std::endl;
@@ -368,16 +484,23 @@ ParseInitializationSentencesAndInitializeLanguageModel()
   // calculate and update word length statistics
   WordLengthProbCalculator::UpdateWHPYLMBaseProbabilitiesScale(
     LanguageModel,
-    Params.WordLengthModulation);
+    Params.WordLengthModulation
+  );
 
   // resample hyperparameters of language model
   LanguageModel->ResampleHyperParameters();
+  if (CharacterLanguageModel != nullptr) {
+    CharacterLanguageModel->ResampleHyperParameters();
+  }
 
   // get perplexity
   DebugLib::PrintSentencesPerplexity(InitializationSentences, *LanguageModel);
 
   // output some language model stats
   DebugLib::PrintLanguageModelStats(*LanguageModel);
+  if (CharacterLanguageModel != nullptr) {
+    DebugLib::PrintLanguageModelStats(*CharacterLanguageModel);
+  }
 }
 
 void LatticeWordSegmentation::TrainLanguageModel(
@@ -395,33 +518,87 @@ void LatticeWordSegmentation::TrainLanguageModel(
   for (std::size_t LMTrainIter = 0;
        LMTrainIter < MaxNumLMTrainIter; LMTrainIter++) {
     // shuffle sentence indices for each iteration
-    std::shuffle(ShuffledIndices.begin(),
-                 ShuffledIndices.end(), RandomGenerator);
+    std::shuffle(
+      ShuffledIndices.begin(),
+      ShuffledIndices.end(),
+      RandomGenerator
+    );
 
     // remove and add sentences again
     for (auto IdxInitFst : ShuffledIndices) {
-      std::cout << "\r  Iteration: " << LMTrainIter + 1
+      std::cerr << "\r  Iteration: " << LMTrainIter + 1
                 << " of " << MaxNumLMTrainIter << ", Sentence: "
                 << IdxInitFst + 1 << " of " << Sentences.size();
 
       LanguageModel->RemoveWordSequenceFromLm(Sentences.at(IdxInitFst));
       LanguageModel->AddWordSequenceToLm(Sentences.at(IdxInitFst));
+
+      if (CharacterLanguageModel != nullptr) {
+        ParseLib::RemoveWordSequenceFromAddCharLM(
+          Sentences.at(IdxInitFst).begin() + WHPYLMContextLength,
+          Sentences.at(IdxInitFst).size() - WHPYLMContextLength,
+          *LanguageModel,
+          CharacterLanguageModel
+        );
+        ParseLib::AddWordSequenceToAddCharLM(
+          Sentences.at(IdxInitFst).begin() + WHPYLMContextLength,
+          Sentences.at(IdxInitFst).size() - WHPYLMContextLength,
+          *LanguageModel,
+          CharacterLanguageModel
+        );
+      }
     }
     std::cout << std::endl;
 
     // calculate and update word length statistics
     WordLengthProbCalculator::UpdateWHPYLMBaseProbabilitiesScale(
       LanguageModel,
-      Params.WordLengthModulation);
+      Params.WordLengthModulation
+    );
 
     // resample hyperparameters of language model
     LanguageModel->ResampleHyperParameters();
+    if (CharacterLanguageModel != nullptr) {
+      CharacterLanguageModel->ResampleHyperParameters();
+    }
 
     // get perplexity
     DebugLib::PrintSentencesPerplexity(Sentences, *LanguageModel);
 
     // output some language model stats
     DebugLib::PrintLanguageModelStats(*LanguageModel);
+    if (CharacterLanguageModel != nullptr) {
+      DebugLib::PrintLanguageModelStats(*CharacterLanguageModel);
+    }
   }
   std::cout << std::endl;
+}
+
+void LatticeWordSegmentation::WriteRescoredLattices() {
+
+  NHPYLMFst CharLMFst(*CharacterLanguageModel, EOW,
+      std::vector<bool>(), true, AvailChars);
+
+  const auto kInputSize = InputFileData.GetInputFsts().size();
+  for (std::size_t inputIdx = 0; inputIdx < kInputSize; inputIdx++) {
+
+    // compose input with language model
+    auto InputFst = InputFileData.GetInputFsts()[inputIdx];
+    fst::ArcSort(&InputFst, fst::OLabelCompare<fst::LogArc>());
+    PM* PM1 = new PM(InputFst, fst::MATCH_NONE);
+    PM* PM2 = new PM(CharLMFst, fst::MATCH_INPUT, PHI_SYMBOLID, false);
+    fst::ComposeFstOptions<fst::LogArc, PM> copts2(fst::CacheOptions(), PM1, PM2);
+    fst::ComposeFst<fst::LogArc> RescoredInput (InputFst, CharLMFst, copts2);
+
+    // clean up output lattice: Remove wordend marker and epsilons
+
+    // build filename and write lattice in fst format
+    // It is easier to take care of the text format convertion from shell level.
+    auto RescoredFilename = DebugLib::BuildFilename(
+        Params.RescoredLatticesDirectoryName,
+        InputFileData.GetInputFileNames()[inputIdx],
+        "_rescored.fst");
+    DebugLib::WriteOpenFSTLattice(fst::VectorFst<fst::LogArc>(RescoredInput),
+                                  RescoredFilename);
+  }
 }

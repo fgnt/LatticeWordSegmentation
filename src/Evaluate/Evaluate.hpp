@@ -70,6 +70,7 @@ class Evaluate{
   const FileData& InputFileData;
   LatticeWordSegmentationTimer& Timer;
   const NHPYLM* LanguageModel;
+  const NHPYLM* CharacterLanguageModel;
 
   /* internal functions */
   void OutputPhonemeErrorRate(
@@ -95,12 +96,14 @@ public:
     const ParameterStruct& Params,
     const FileData& InputFileData,
     LatticeWordSegmentationTimer& Timer,
-    const NHPYLM* LanguageModel
-  ):
+    const NHPYLM* LanguageModel,
+    const NHPYLM* CharacterLanguageModel
+  ) :
     Params(Params),
     InputFileData(InputFileData),
     Timer(Timer),
-    LanguageModel(LanguageModel) {};
+    LanguageModel(LanguageModel),
+    CharacterLanguageModel(CharacterLanguageModel) {};
 
 
   /* interface */

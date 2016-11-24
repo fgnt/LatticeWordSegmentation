@@ -44,6 +44,7 @@
 #include "DebugLib.hpp"
 #include <iomanip>
 #include <iostream>
+#include <boost/filesystem/path.hpp>
 
 using std::vector;
 using std::string;
@@ -140,19 +141,25 @@ void DebugLib::PrintSentencesPerplexity(const std::vector<std::vector<int> > &Se
 
 void DebugLib::PrintLanguageModelStats(const NHPYLM &LanguageModel)
 {
-  std::cout << std::setprecision(2) << " CHPYLM statistics:";
-  PrintVectorOfInts(LanguageModel.GetTotalCountPerLevelFor("CHPYLM", "Context"), 8, "\n  Contexts:      ", "");
-  PrintVectorOfInts(LanguageModel.GetTotalCountPerLevelFor("CHPYLM", "Table"),   8, "\n  Tables:        ", "");
-  PrintVectorOfInts(LanguageModel.GetTotalCountPerLevelFor("CHPYLM", "Word"),    8, "\n  Characters:    ", "");
-  PrintVectorOfDoubles(LanguageModel.GetNHPYLMParameters().CHPYLMConcentration,  8, "\n  Concentration: ", "");
-  PrintVectorOfDoubles(LanguageModel.GetNHPYLMParameters().CHPYLMDiscount,       8, "\n  Discount:      ", "");
-  std::cout << "\n WHPYLM statistics:";
-  PrintVectorOfInts(LanguageModel.GetTotalCountPerLevelFor("WHPYLM", "Context"), 8, "\n  Contexts:      ", "");
-  PrintVectorOfInts(LanguageModel.GetTotalCountPerLevelFor("WHPYLM", "Table"),   8, "\n  Tables:        ", "");
-  PrintVectorOfInts(LanguageModel.GetTotalCountPerLevelFor("WHPYLM", "Word"),    8, "\n  Words:         ", "");
-  PrintVectorOfDoubles(LanguageModel.GetNHPYLMParameters().WHPYLMConcentration,  8, "\n  Concentration: ", "");
-  PrintVectorOfDoubles(LanguageModel.GetNHPYLMParameters().WHPYLMDiscount,       8, "\n  Discount:      ", "");
-  std::cout << std::endl << std::endl;
+  if(LanguageModel.GetCHPYLMOrder() > 0) {
+    std::cout << std::setprecision(2) << " CHPYLM statistics:";
+    PrintVectorOfInts(LanguageModel.GetTotalCountPerLevelFor("CHPYLM", "Context"), 8, "\n  Contexts:      ", "");
+    PrintVectorOfInts(LanguageModel.GetTotalCountPerLevelFor("CHPYLM", "Table"),   8, "\n  Tables:        ", "");
+    PrintVectorOfInts(LanguageModel.GetTotalCountPerLevelFor("CHPYLM", "Word"),    8, "\n  Characters:    ", "");
+    PrintVectorOfDoubles(LanguageModel.GetNHPYLMParameters().CHPYLMConcentration,  8, "\n  Concentration: ", "");
+    PrintVectorOfDoubles(LanguageModel.GetNHPYLMParameters().CHPYLMDiscount,       8, "\n  Discount:      ", "");
+    std::cout << "\n";
+  }
+  if(LanguageModel.GetWHPYLMOrder() > 0) {
+    std::cout << " WHPYLM statistics:";
+    PrintVectorOfInts(LanguageModel.GetTotalCountPerLevelFor("WHPYLM", "Context"), 8, "\n  Contexts:      ", "");
+    PrintVectorOfInts(LanguageModel.GetTotalCountPerLevelFor("WHPYLM", "Table"),   8, "\n  Tables:        ", "");
+    PrintVectorOfInts(LanguageModel.GetTotalCountPerLevelFor("WHPYLM", "Word"),    8, "\n  Words:         ", "");
+    PrintVectorOfDoubles(LanguageModel.GetNHPYLMParameters().WHPYLMConcentration,  8, "\n  Concentration: ", "");
+    PrintVectorOfDoubles(LanguageModel.GetNHPYLMParameters().WHPYLMDiscount,       8, "\n  Discount:      ", "");
+    std::cout << "\n";
+  }
+  std::cout << std::endl;
 }
 
 void DebugLib::PrintVectorOfInts(const std::vector< int > &VectorOfInts, int Width, const std::string &Description, const std::string &Postfix)
@@ -174,7 +181,7 @@ void DebugLib::PrintVectorOfDoubles(const std::vector< double > &VectorOfDoubles
 void DebugLib::WriteOpenFSTLattice(const fst::VectorFst< fst::LogArc > &fst, const string &FileName)
 {
   CreateDirectoryRecursively(FileName);
-  fst.Write(FileName.c_str());
+  fst.Write(FileName);
 }
 
 void DebugLib::WriteSymbols(const string &fileName, const vector< string > &words, SymbolWriteModes SymbolWriteMode)
@@ -321,4 +328,9 @@ void DebugLib::GenerateSentencesOfWordsFromWordLM(
     }
     std::cout << std::endl;
   }
+}
+
+string DebugLib::BuildFilename(string Basepath, string InFilepath, string suffix)
+{
+  return Basepath + boost::filesystem::path(InFilepath).stem().string() + suffix;
 }
